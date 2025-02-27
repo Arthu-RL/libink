@@ -3,25 +3,29 @@
 namespace vac {
 
 ThreadPool::ThreadPool(size_t max_workers) :
-    stop(false)
+    _stop(false), _active_workers(0)
 {
     for (size_t i = 0; i < max_workers; ++i)
     {
-        workers.emplace_back([this] {
+        _workers.emplace_back([this] {
             while (true)
             {
-                std::function<void()> task;
+                std::function<void()> _task;
                 {
-                    std::unique_lock<std::mutex> lock(queueMutex);
-                    condition.wait(lock, [this]{
-                        return stop || !tasks.empty();
-                    });
+                    std::unique_lock<std::mutex> lock(_queueMutex);
+                    _condition.wait(lock, [this]{ return _stop || !_tasks.empty(); });
 
-                    if (stop && tasks.empty()) return;
-                    task = std::move(tasks.front());
-                    tasks.pop();
+                    if (_stop && _tasks.empty()) return;
+
+                    _task = std::move(_tasks.front());
+                    _tasks.pop();
+                    _active_workers++;
                 }
-                task();
+
+                _task();
+
+                _active_workers--;
+                _condition.notify_all();
             }
         });
     }
@@ -29,13 +33,18 @@ ThreadPool::ThreadPool(size_t max_workers) :
 
 ThreadPool::~ThreadPool() {
     {
-        std::unique_lock<std::mutex> lock(queueMutex);
-        stop = true;
+        std::unique_lock<std::mutex> lock(_queueMutex);
+        _stop = true;
     }
-    condition.notify_all();
-    for (std::thread& worker : workers) {
+    _condition.notify_all();
+    for (std::thread& worker : _workers) {
         worker.join();
     }
+}
+
+void ThreadPool::wait() {
+    std::unique_lock<std::mutex> lock(_queueMutex);
+    _condition.wait(lock, [this] { return _tasks.empty() && (_active_workers == 0); });
 }
 
 }

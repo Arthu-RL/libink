@@ -1,8 +1,8 @@
 #include <iostream>
-#include "../include/vac/threadpool.h"
+#include "../include/vac/vac.hpp"
 #include <chrono>
 
-void runtime(const std::function<void()>& f) {
+void runtime(std::function<void()>&& f) {
     auto start = std::chrono::high_resolution_clock::now();
 
     f();
@@ -21,21 +21,22 @@ int add(int a, int b) {
 
 int main() {
     // Create a thread pool with 4 threads
-    vac::ThreadPool pool(4);
+    int max_workers = 4;
+    vac::ThreadPool pool(max_workers);
+    std::vector<std::future<int>> futures;
 
     // Submit tasks to the thread pool
     runtime([&](){
-        auto result1 = pool.submit(add, 3, 4);
-        auto result2 = pool.submit(add, 10, 20);
-        auto result3 = pool.submit(add, 7, 8);
-        auto result4 = pool.submit(add, 9, 8);
-        // auto result5 = pool.submit(add, 10, 8);
+        for (int i = 0; i < max_workers; ++i)
+        {
+            futures.push_back(pool.submit(add, max_workers, i));
+        }
 
-        std::cout << "Result 1: " << result1.get() << std::endl;
-        std::cout << "Result 2: " << result2.get() << std::endl;
-        std::cout << "Result 3: " << result3.get() << std::endl;
-        std::cout << "Result 4: " << result4.get() << std::endl;
-        // std::cout << "Result 5: " << result5.get() << std::endl;
+        for (int i = 0; i < max_workers; ++i)
+        {
+            std::cout << "Result " << i+1 << ": " << futures[i].get() << std::endl;
+        }
+        // pool.wait();
     });
 
     return 0;
