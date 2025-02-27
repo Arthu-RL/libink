@@ -26,7 +26,7 @@ target_link_libraries(your_target vac)
 ```
 
 ```cpp
-#include "vac/thread_pool.h"
+#include <vac/vac.hpp>
 ```
 
 # Acknowledgements
