@@ -1,7 +1,7 @@
-#include "../include/vac/EnhancedJsonUtils.h"
+#include "../include/ink/EnhancedJsonUtils.h"
 #include <iostream>
 
-namespace vac {
+namespace ink {
 
 // Factory methods
 EnhancedJson EnhancedJsonUtils::array() {
@@ -21,7 +21,7 @@ EnhancedJson EnhancedJsonUtils::loadFromFile(const std::string& filePath) {
     return EnhancedJson::loadFromFile(filePath);
 }
 
-vac_bool EnhancedJsonUtils::saveToFile(const EnhancedJson& json, const std::string& filePath, vac_bool pretty, vac_i8 indent) {
+ink_bool EnhancedJsonUtils::saveToFile(const EnhancedJson& json, const std::string& filePath, ink_bool pretty, ink_i8 indent) {
     return json.saveToFile(filePath, pretty, indent);
 }
 
@@ -38,7 +38,7 @@ EnhancedJson EnhancedJsonUtils::loadFromString(const std::string& jsonStr) {
 }
 
 // Serialization
-std::string EnhancedJsonUtils::toString(const EnhancedJson& json, vac_bool pretty, vac_i8 indent) {
+std::string EnhancedJsonUtils::toString(const EnhancedJson& json, ink_bool pretty, ink_i8 indent) {
     return pretty ? json.toPrettyString(indent) : json.toCompactString();
 }
 
@@ -79,36 +79,36 @@ EnhancedJson EnhancedJsonUtils::fromBinary(const std::vector<uint8_t>& data, con
 }
 
 // Type checking utilities
-vac_bool EnhancedJsonUtils::isArray(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isArray(const EnhancedJson& json) {
     return json.is_array();
 }
 
-vac_bool EnhancedJsonUtils::isObject(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isObject(const EnhancedJson& json) {
     return json.is_object();
 }
 
-vac_bool EnhancedJsonUtils::isNull(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isNull(const EnhancedJson& json) {
     return json.is_null();
 }
 
-vac_bool EnhancedJsonUtils::isNumber(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isNumber(const EnhancedJson& json) {
     return json.is_number();
 }
 
-vac_bool EnhancedJsonUtils::isString(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isString(const EnhancedJson& json) {
     return json.is_string();
 }
 
-vac_bool EnhancedJsonUtils::isBoolean(const EnhancedJson& json) {
+ink_bool EnhancedJsonUtils::isBoolean(const EnhancedJson& json) {
     return json.is_boolean();
 }
 
 // Array utilities
-vac_size EnhancedJsonUtils::size(const EnhancedJson& json) {
+ink_size EnhancedJsonUtils::size(const EnhancedJson& json) {
     return json.size();
 }
 
-vac_bool EnhancedJsonUtils::hasKey(const EnhancedJson& json, const std::string& key) {
+ink_bool EnhancedJsonUtils::hasKey(const EnhancedJson& json, const std::string& key) {
     return json.has(key);
 }
 
@@ -132,7 +132,7 @@ EnhancedJson EnhancedJsonUtils::patch(const EnhancedJson& source, const Enhanced
 }
 
 // Schema validation
-vac_bool EnhancedJsonUtils::validate(const EnhancedJson& json, const EnhancedJson& schema) {
+ink_bool EnhancedJsonUtils::validate(const EnhancedJson& json, const EnhancedJson& schema) {
     return json.isValid(schema);
 }
 

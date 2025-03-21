@@ -5,7 +5,9 @@
 
 #include <functional>
 
-namespace vac {
+#include "ink/ink_base.hpp"
+
+namespace ink {
 
 /**
  * @class LastWish
@@ -16,7 +18,7 @@ namespace vac {
  * This pattern can be useful in scenarios where you want to ensure that certain cleanup or follow-up actions are performed
  * automatically after the execution of a function or at the end of a specific scope.
  */
-class LastWish {
+class INK_API LastWish {
 public:
     /**
      * @brief Constructor that executes the initial function immediately.

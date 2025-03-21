@@ -11,13 +11,13 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "vac/vac_base.hpp"
+#include "ink/ink_base.hpp"
 
-namespace vac {
+namespace ink {
 
-class ThreadPool {
+class INK_API ThreadPool {
 public:
-    ThreadPool(vac_size max_workers);
+    ThreadPool(ink_size max_workers);
     ~ThreadPool();
 
     template <typename Function, typename... Args>
@@ -52,7 +52,7 @@ private:
 
     std::mutex _queueMutex;
     std::condition_variable _condition;
-    vac_bool _stop;
+    ink_bool _stop;
 };
 
 }

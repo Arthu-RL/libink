@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace vac {
+namespace ink {
 
 namespace utils {
 

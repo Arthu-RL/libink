@@ -1,17 +1,16 @@
-#ifndef VACEXCEPTION_H
-#define VACEXCEPTION_H
+#ifndef INKEXCEPTION_H
+#define INKEXCEPTION_H
 
 /**
- * @file VacException.hpp
- * @brief Exception handling for VAC library
+ * @file InkException.hpp
+ * @brief Exception handling for INK library
  *
- * This file contains a hierarchy of exception classes for the VAC library
+ * This file contains a hierarchy of exception classes for the INK library
  * that provide advanced error handling capabilities.
  */
 
 #pragma once
 
-#include <vac/vac_base.hpp>
 #include <exception>
 #include <string>
 #include <sstream>
@@ -19,15 +18,17 @@
 #include <unordered_map>
 #include <chrono>
 
-namespace vac {
+#include "ink/ink_base.hpp"
+
+namespace ink {
 
 /**
- * @brief Base exception class for VAC library
+ * @brief Base exception class for INK library
  *
- * This class serves as the foundation for all VAC exceptions,
+ * This class serves as the foundation for all INK exceptions,
  * providing common functionality and a clean interface.
  */
-class VAC_API VacException : public std::exception {
+class INK_API INKException : public std::exception {
 public:
     // =============== Constructors ===============
 
@@ -36,10 +37,10 @@ public:
      * @param message The error message
      * @param location Source location information (auto-captured)
      */
-    explicit VacException(
+    explicit INKException(
         const std::string& message,
         const char* file = __FILE__,
-        vac_u32 line = __LINE__,
+        ink_u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) :
         m_message(message),
@@ -60,11 +61,11 @@ public:
      * @param line Source line number
      * @param function Source function name
      */
-    explicit VacException(
-        vac_result_t result,
+    explicit INKException(
+        ink_result_t result,
         const std::string& message,
         const char* file = __FILE__,
-        vac_u32 line = __LINE__,
+        ink_u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) :
         m_result(result),
@@ -91,7 +92,7 @@ public:
     /**
      * @brief Virtual destructor to allow proper cleanup of derived classes
      */
-    virtual ~VacException() noexcept = default;
+    virtual ~INKException() noexcept = default;
 
     // =============== Virtual Type Methods ===============
 
@@ -117,7 +118,7 @@ public:
      * @brief Get the result code
      * @return The result code
      */
-    vac_result_t result() const noexcept {
+    ink_result_t result() const noexcept {
         return m_result;
     }
 
@@ -172,7 +173,7 @@ public:
      * @return Reference to this exception (for chaining)
      */
     template<typename T>
-    VacException& addContext(const std::string& key, const T& value) {
+    INKException& addContext(const std::string& key, const T& value) {
         std::ostringstream oss;
         oss << value;
         m_context[key] = oss.str();
@@ -198,7 +199,7 @@ public:
      * @param key The context key
      * @return True if the key exists
      */
-    vac_bool hasContext(const std::string& key) const {
+    ink_bool hasContext(const std::string& key) const {
         return m_context.find(key) != m_context.end();
     }
 
@@ -209,7 +210,7 @@ public:
      * @param includeStackTrace Whether to include the stack trace
      * @return Formatted string representation of the exception
      */
-    virtual std::string toString(vac_bool includeStackTrace = true) const {
+    virtual std::string toString(ink_bool includeStackTrace = true) const {
         return m_fullMessage + (includeStackTrace ? formatStackTrace() : "");
     }
 
@@ -218,16 +219,16 @@ public:
      * @param message The outer exception message
      * @param innerException The inner exception to wrap
      * @param location Source location information
-     * @return A new VacException with nested information
+     * @return A new INKException with nested information
      */
-    static VacException nested(
+    static INKException nested(
         const std::string& message,
         const std::exception& innerException,
         const char* file = __FILE__,
-        vac_u32 line = __LINE__,
+        ink_u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) {
-        VacException ex(message, file, line, function);
+        INKException ex(message, file, line, function);
         ex.addContext("InnerException", innerException.what());
         return ex;
     }
@@ -248,7 +249,7 @@ protected:
         oss << "\n";
 
         // Add result code if available
-        if (m_result != vac_result_t::SUCCESS) {
+        if (m_result != ink_result_t::SUCCESS) {
             oss << "  Result Code: " << static_cast<int>(m_result) << "\n";
         }
 
@@ -304,11 +305,11 @@ protected:
 
 protected:
     // Protected data members accessible to derived classes
-    vac_result_t m_result = vac_result_t::SUCCESS;
+    ink_result_t m_result = ink_result_t::SUCCESS;
     std::string m_message;
     std::string m_file;
     std::string m_function;
-    vac_u32 m_line;
+    ink_u32 m_line;
     // No column number in C++17 and below
     std::chrono::system_clock::time_point m_timestamp;
     std::vector<std::string> m_stackTrace;
@@ -322,24 +323,24 @@ protected:
  * @brief Throw a generic exception with current source location
  * @param message The error message
  */
-#define VAC_THROW(message) \
-throw vac::VacException((message), __FILE__, __LINE__, __FUNCTION__)
+#define INK_THROW(message) \
+throw ink::INKException((message), __FILE__, __LINE__, __FUNCTION__)
 
 /**
  * @brief Throw a specific type of exception with current source location
  * @param ExClass The exception class
  * @param ... Arguments to pass to the exception constructor
  */
-#define VAC_THROW_EX(ExClass, ...) \
-    throw vac::ExClass(__VA_ARGS__)
+#define INK_THROW_EX(ExClass, ...) \
+    throw ink::ExClass(__VA_ARGS__)
 
 /**
  * @brief Throw if condition is not met
  * @param condition The condition to check
  * @param message The error message
  */
-#define VAC_THROW_IF(condition, message) \
-    if (VAC_UNLIKELY(!(condition))) { VAC_THROW(message); }
+#define INK_THROW_IF(condition, message) \
+    if (INK_UNLIKELY(!(condition))) { INK_THROW(message); }
 
 /**
  * @brief Throw a specific exception type if condition is not met
@@ -347,16 +348,16 @@ throw vac::VacException((message), __FILE__, __LINE__, __FUNCTION__)
  * @param ExClass The exception class
  * @param ... Arguments to pass to the exception constructor
  */
-#define VAC_THROW_IF_EX(condition, ExClass, ...) \
-if (VAC_UNLIKELY(!(condition))) { VAC_THROW_EX(ExClass, __VA_ARGS__); }
+#define INK_THROW_IF_EX(condition, ExClass, ...) \
+if (INK_UNLIKELY(!(condition))) { INK_THROW_EX(ExClass, __VA_ARGS__); }
 
 /**
  * @brief Create a nested exception wrapping the current exception
  * @param message The outer exception message
  */
-#define VAC_NEST_EXCEPTION(message) \
+#define INK_NEST_EXCEPTION(message) \
 catch (const std::exception& e) { \
-        throw vac::VacException::nested((message), e, __FILE__, __LINE__, __FUNCTION__); \
+        throw ink::INKException::nested((message), e, __FILE__, __LINE__, __FUNCTION__); \
 }
 
 /**
@@ -364,11 +365,11 @@ catch (const std::exception& e) { \
  * @param code The code to execute
  * @param message The error message for wrapper exception
  */
-#define VAC_TRY_WRAP(code, message) \
+#define INK_TRY_WRAP(code, message) \
 try { \
         code; \
-} VAC_NEST_EXCEPTION(message)
+} INK_NEST_EXCEPTION(message)
 
-} // namespace vac
+} // namespace ink
 
-#endif // VACEXCEPTION_H
+#endif // INKEXCEPTION_H

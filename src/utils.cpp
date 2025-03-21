@@ -1,10 +1,10 @@
-#include "../include/vac/utils.h"
+#include "../include/ink/utils.h"
 
 #include <memory>
 #include <vector>
-#include "../include/vac/VacException.h"
+#include "../include/ink/InkException.h"
 
-namespace vac {
+namespace ink {
 
 namespace utils {
 
@@ -12,7 +12,7 @@ std::string exec_command(const std::string& cmd)
 {
     // Use unique_ptr with custom deleter for RAII on the pipe
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    VAC_THROW_IF(!pipe, "Command execution failed");
+    INK_THROW_IF(!pipe, "Command execution failed");
 
     std::string result;
     result.reserve(16384); // 16KB initial reservation

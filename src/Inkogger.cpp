@@ -1,18 +1,18 @@
-#include "../include/vac/VacLogger.h"
+#include "../include/ink/Inkogger.h"
 
 #include <sstream>
 #include <chrono>
 #include <iomanip>
 #include <cstring>
 
-namespace vac {
+namespace ink {
 
-Logger::Logger(const std::string& name)
+Inkogger::Inkogger(const std::string& name)
     : m_Name(name), m_Level(LogLevel::INFO), m_UseColors(true), m_LogToFile(false)
 {
 }
 
-Logger::~Logger()
+Inkogger::~Inkogger()
 {
     if (m_FileStream.is_open())
     {
@@ -20,17 +20,17 @@ Logger::~Logger()
     }
 }
 
-void Logger::setLevel(LogLevel level)
+void Inkogger::setLevel(LogLevel level)
 {
     m_Level = level;
 }
 
-vac_bool Logger::isEnabled(LogLevel level) const
+ink_bool Inkogger::isEnabled(LogLevel level) const
 {
     return level >= m_Level;
 }
 
-std::string Logger::getColorForLevel(LogLevel level) const
+std::string Inkogger::getColorForLevel(LogLevel level) const
 {
     if (!m_UseColors) return "";
 
@@ -46,7 +46,7 @@ std::string Logger::getColorForLevel(LogLevel level) const
     }
 }
 
-std::string Logger::getLevelString(LogLevel level) const
+std::string Inkogger::getLevelString(LogLevel level) const
 {
     switch (level) {
         case LogLevel::TRACE: return "TRACE";
@@ -60,7 +60,7 @@ std::string Logger::getLevelString(LogLevel level) const
     }
 }
 
-std::string Logger::getCurrentTimestamp() const
+std::string Inkogger::getCurrentTimestamp() const
 {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
@@ -73,7 +73,7 @@ std::string Logger::getCurrentTimestamp() const
     return ss.str();
 }
 
-void Logger::log(LogLevel level, const std::string& message, const char* file, vac_u32 line)
+void Inkogger::log(LogLevel level, const std::string& message, const char* file, ink_u32 line)
 {
     // This check is redundant with the macro check, but kept for safety
     if (!isEnabled(level)) return;
@@ -99,7 +99,7 @@ void Logger::log(LogLevel level, const std::string& message, const char* file, v
     std::string reset = m_UseColors ? Colors::RESET : "";
 
     // Format: [timestamp] [level] [name]: message (file:line)
-    vac_u32 len = snprintf(buffer, sizeof(buffer),
+    ink_u32 len = snprintf(buffer, sizeof(buffer),
         "[%s] %s[%s]%s [%s]: %s (%s:%d)",
         timestamp.c_str(),
         color.c_str(),
@@ -137,7 +137,7 @@ void Logger::log(LogLevel level, const std::string& message, const char* file, v
     }
 }
 
-void Logger::setLogToFile(const std::string& filepath)
+void Inkogger::setLogToFile(const std::string& filepath)
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
 
@@ -150,19 +150,19 @@ void Logger::setLogToFile(const std::string& filepath)
     if (m_LogToFile) {
         m_FileStream.open(filepath, std::ios::out | std::ios::app);
         if (!m_FileStream.is_open()) {
-            VAC_ERROR << "Failed to open log file: " << filepath;
+            INK_ERROR << "Failed to open log file: " << filepath;
             m_LogToFile = false;
         }
     }
 }
 
-void Logger::setUseColors(vac_bool useColors)
+void Inkogger::setUseColors(ink_bool useColors)
 {
     m_UseColors = useColors;
 }
 
 // LogManager implementation
-std::shared_ptr<Logger> LogManager::getLogger(const std::string& name)
+std::shared_ptr<Inkogger> LogManager::getLogger(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
 
@@ -171,7 +171,7 @@ std::shared_ptr<Logger> LogManager::getLogger(const std::string& name)
         return it->second;
     }
 
-    auto logger = std::make_shared<Logger>(name);
+    auto logger = std::make_shared<Inkogger>(name);
     logger->setLevel(m_GlobalLevel);
 
     if (!m_GlobalFilePath.empty()) {
@@ -205,7 +205,7 @@ void LogManager::setLogToFile(const std::string& filepath)
     }
 }
 
-void LogManager::setUseColors(vac_bool useColors)
+void LogManager::setUseColors(ink_bool useColors)
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
 

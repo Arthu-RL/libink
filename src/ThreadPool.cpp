@@ -1,11 +1,11 @@
-#include "../include/vac/ThreadPool.h"
+#include "../include/ink/ThreadPool.h"
 
-namespace vac {
+namespace ink {
 
-ThreadPool::ThreadPool(vac_size max_workers) :
+ThreadPool::ThreadPool(ink_size max_workers) :
     _stop(false), _active_workers(0)
 {
-    for (vac_size i = 0; i < max_workers; ++i)
+    for (ink_size i = 0; i < max_workers; ++i)
     {
         _workers.emplace_back([this] {
             while (true)

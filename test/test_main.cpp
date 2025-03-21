@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "../include/vac/vac.hpp"
+#include "../include/ink/ink.hpp"
 
 void runtime(std::function<void()>&& f) {
     auto start = std::chrono::high_resolution_clock::now();
@@ -23,7 +23,7 @@ int add(int a, int b) {
 int main() {
     // Create a thread pool with 4 threads
     int max_workers = 4;
-    vac::ThreadPool pool(max_workers);
+    ink::ThreadPool pool(max_workers);
     std::vector<std::future<int>> futures;
 
     // Submit tasks to the thread pool

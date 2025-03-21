@@ -9,12 +9,12 @@
 #include <functional>
 #include <fstream>
 
-#include "vac/vac_base.hpp"
+#include "ink/ink_base.hpp"
 
-namespace vac {
+namespace ink {
 
 // Forward declaration for Query class
-class JsonQuery;
+class INK_API JsonQuery;
 
 /**
  * @brief Enhanced JSON class that extends nlohmann::json with additional functionality
@@ -27,7 +27,7 @@ class JsonQuery;
  * - Transformation and mapping functions
  * - Extended validation capabilities
  */
-class EnhancedJson : public nlohmann::json {
+class INK_API EnhancedJson : public nlohmann::json {
 public:
     // Constructors - inherit all constructors from the base class
     using nlohmann::json::json;
@@ -95,7 +95,7 @@ public:
      * @return Value at index or default value
      */
     template<typename T>
-    T get(vac_size index, const T& defaultValue = T()) const {
+    T get(ink_size index, const T& defaultValue = T()) const {
         try {
             if (is_array() && index < size()) {
                 return at(index).get<T>();
@@ -108,7 +108,7 @@ public:
     }
 
     // Specialization for EnhancedJson
-    EnhancedJson get(vac_size index, const EnhancedJson& defaultValue = EnhancedJson()) const {
+    EnhancedJson get(ink_size index, const EnhancedJson& defaultValue = EnhancedJson()) const {
         try {
             if (is_array() && index < size()) {
                 return EnhancedJson(at(index));
@@ -129,13 +129,13 @@ public:
     template<typename T>
     T getPath(const std::string& path, const T& defaultValue = T()) const {
         try {
-            vac_size pos = path.find('.');
+            ink_size pos = path.find('.');
 
             // No more dots, this is the final segment
             if (pos == std::string::npos) {
                 // Try to interpret as array index if it's a number
                 try {
-                    vac_size index = std::stoul(path);
+                    ink_size index = std::stoul(path);
                     return get<T>(index, defaultValue);
                 } catch (...) {
                     // Not a number, treat as object key
@@ -151,7 +151,7 @@ public:
 
             // Try to interpret as array index if it's a number
             try {
-                vac_size index = std::stoul(firstSegment);
+                ink_size index = std::stoul(firstSegment);
                 if (is_array() && index < size()) {
                     nextJson = EnhancedJson(at(index));
                 } else {
@@ -177,13 +177,13 @@ public:
     // Specialization for EnhancedJson
     EnhancedJson getPath(const std::string& path, const EnhancedJson& defaultValue = EnhancedJson()) const {
         try {
-            vac_size pos = path.find('.');
+            ink_size pos = path.find('.');
 
             // No more dots, this is the final segment
             if (pos == std::string::npos) {
                 // Try to interpret as array index if it's a number
                 try {
-                    vac_size index = std::stoul(path);
+                    ink_size index = std::stoul(path);
                     return get(index, defaultValue);
                 } catch (...) {
                     // Not a number, treat as object key
@@ -199,7 +199,7 @@ public:
 
             // Try to interpret as array index if it's a number
             try {
-                vac_size index = std::stoul(firstSegment);
+                ink_size index = std::stoul(firstSegment);
                 if (is_array() && index < size()) {
                     nextJson = EnhancedJson(at(index));
                 } else {
@@ -227,7 +227,7 @@ public:
      * @param key The key to check
      * @return True if key exists, false otherwise
      */
-    vac_bool has(const std::string& key) const {
+    ink_bool has(const std::string& key) const {
         return is_object() && contains(key);
     }
 
@@ -236,15 +236,15 @@ public:
      * @param path The path to check (e.g., "user.address.street")
      * @return True if path exists, false otherwise
      */
-    vac_bool hasPath(const std::string& path) const {
+    ink_bool hasPath(const std::string& path) const {
         try {
-            vac_size pos = path.find('.');
+            ink_size pos = path.find('.');
 
             // No more dots, this is the final segment
             if (pos == std::string::npos) {
                 // Try to interpret as array index if it's a number
                 try {
-                    vac_size index = std::stoul(path);
+                    ink_size index = std::stoul(path);
                     return is_array() && index < size();
                 } catch (...) {
                     // Not a number, treat as object key
@@ -258,7 +258,7 @@ public:
 
             // Try to interpret as array index if it's a number
             try {
-                vac_size index = std::stoul(firstSegment);
+                ink_size index = std::stoul(firstSegment);
                 if (is_array() && index < size()) {
                     EnhancedJson nextJson = EnhancedJson(at(index));
                     return nextJson.hasPath(remainingPath);
@@ -283,10 +283,10 @@ public:
 
     /**
      * @brief Filter array elements based on a predicate
-     * @param predicate Function that takes EnhancedJson and returns vac_bool
+     * @param predicate Function that takes EnhancedJson and returns ink_bool
      * @return New EnhancedJson array with filtered elements
      */
-    EnhancedJson filter(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    EnhancedJson filter(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         EnhancedJson result = array();
 
         if (!is_array()) {
@@ -351,7 +351,7 @@ public:
      * @param predicate Function that tests elements
      * @return First matching element or null
      */
-    EnhancedJson find(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    EnhancedJson find(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         if (!is_array()) {
             return EnhancedJson(nullptr);
         }
@@ -371,7 +371,7 @@ public:
      * @param predicate Function that tests elements
      * @return Array of matching elements
      */
-    EnhancedJson findAll(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    EnhancedJson findAll(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         return filter(predicate);
     }
 
@@ -380,7 +380,7 @@ public:
      * @param predicate Function that tests elements
      * @return True if any element matches, false otherwise
      */
-    vac_bool any(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    ink_bool any(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         if (!is_array()) {
             return false;
         }
@@ -400,7 +400,7 @@ public:
      * @param predicate Function that tests elements
      * @return True if all elements match, false otherwise
      */
-    vac_bool all(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    ink_bool all(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         if (!is_array() || empty()) {
             return false;
         }
@@ -427,7 +427,7 @@ public:
      */
     template<typename T>
     EnhancedJson& setPath(const std::string& path, const T& value) {
-        vac_size pos = path.find('.');
+        ink_size pos = path.find('.');
 
         // No more dots, this is the final segment
         if (pos == std::string::npos) {
@@ -466,7 +466,7 @@ public:
      * @param overwrite Whether to overwrite existing values
      * @return Reference to this object
      */
-    EnhancedJson& merge(const EnhancedJson& other, vac_bool overwrite = true) {
+    EnhancedJson& merge(const EnhancedJson& other, ink_bool overwrite = true) {
         if (!is_object() || !other.is_object()) {
             return *this;
         }
@@ -513,7 +513,7 @@ public:
      * @param key Key to remove
      * @return True if key was removed, false otherwise
      */
-    vac_bool removeKey(const std::string& key) {
+    ink_bool removeKey(const std::string& key) {
         if (!is_object() || !contains(key)) {
             return false;
         }
@@ -527,8 +527,8 @@ public:
      * @param path Path to the value to remove
      * @return True if value was removed, false otherwise
      */
-    vac_bool removePath(const std::string& path) {
-        vac_size pos = path.find('.');
+    ink_bool removePath(const std::string& path) {
+        ink_size pos = path.find('.');
 
         // No more dots, this is the final segment
         if (pos == std::string::npos) {
@@ -542,7 +542,7 @@ public:
         // If the first segment exists and is an object, recursively remove from it
         if (is_object() && contains(firstSegment) && at(firstSegment).is_object()) {
             EnhancedJson nextJson = EnhancedJson((*this)[firstSegment]);
-            vac_bool result = nextJson.removePath(remainingPath);
+            ink_bool result = nextJson.removePath(remainingPath);
             (*this)[firstSegment] = nextJson;
             return result;
         }
@@ -559,7 +559,7 @@ public:
      * @param schema Schema to validate against
      * @return True if valid, false otherwise
      */
-    vac_bool isValid(const nlohmann::json& schema) const {
+    ink_bool isValid(const nlohmann::json& schema) const {
         // This is a simplified schema validation
         // For production, consider a dedicated JSON Schema validator library
 
@@ -722,7 +722,7 @@ public:
      * @param indent Number of spaces for indentation
      * @return True if successful, false otherwise
      */
-    vac_bool saveToFile(const std::string& filepath, vac_bool pretty = true, int indent = 4) const {
+    ink_bool saveToFile(const std::string& filepath, ink_bool pretty = true, int indent = 4) const {
         try {
             std::ofstream file(filepath);
             if (!file.is_open()) {
@@ -765,7 +765,7 @@ public:
 /**
  * @brief Query class for fluent interface to JSON data
  */
-class JsonQuery {
+class INK_API JsonQuery {
 public:
     JsonQuery(const EnhancedJson* root, const std::string& path = "")
         : m_root(root) {
@@ -794,7 +794,7 @@ public:
      * @return Value at index or default value
      */
     template<typename T>
-    T get(vac_size index, const T& defaultValue = T()) const {
+    T get(ink_size index, const T& defaultValue = T()) const {
         return m_target.get<T>(index, defaultValue);
     }
 
@@ -803,7 +803,7 @@ public:
      * @param key Key to check
      * @return True if key exists, false otherwise
      */
-    vac_bool has(const std::string& key) const {
+    ink_bool has(const std::string& key) const {
         return m_target.has(key);
     }
 
@@ -830,7 +830,7 @@ public:
      * @param predicate Function to test elements
      * @return New query with filtered target
      */
-    JsonQuery filter(std::function<vac_bool(const EnhancedJson&)> predicate) const {
+    JsonQuery filter(std::function<ink_bool(const EnhancedJson&)> predicate) const {
         EnhancedJson filtered = m_target.filter(predicate);
         return JsonQuery(m_root, filtered);
     }
@@ -877,7 +877,7 @@ private:
 };
 
 // Implementation of query method
-VAC_INLINE JsonQuery EnhancedJson::query(const std::string& path) const {
+INK_INLINE JsonQuery EnhancedJson::query(const std::string& path) const {
     return JsonQuery(this, path);
 }
 

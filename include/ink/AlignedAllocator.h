@@ -5,20 +5,20 @@
 
 #include <algorithm>
 
-#include "vac/vac_base.hpp"
+#include "ink/ink_base.hpp"
 
-namespace aura3d {
+namespace ink {
 
 // Custom aligned allocator for high-performance memory access
-template<typename T, vac_size Alignment = 32> // 32-byte alignment for AVX instructions
-class AlignedAllocator {
+template<typename T, ink_size Alignment = 32> // 32-byte alignment for AVX instructions
+class INK_API AlignedAllocator {
 public:
     using value_type = T;
     using pointer = T*;
     using const_pointer = const T*;
     using reference = T&;
     using const_reference = const T&;
-    using difference_type = vac_ptrdiff;
+    using difference_type = ink_ptrdiff;
 
     template<typename U>
     struct rebind {
@@ -29,7 +29,7 @@ public:
     template<typename U>
     AlignedAllocator(const AlignedAllocator<U, Alignment>&) noexcept {}
 
-    pointer allocate(vac_size n) {
+    pointer allocate(ink_size n) {
         void* ptr = nullptr;
 #if defined(_MSC_VER)
         ptr = _aligned_malloc(n * sizeof(T), Alignment);
@@ -46,7 +46,7 @@ public:
         return static_cast<pointer>(ptr);
     }
 
-    void deallocate(pointer p, vac_size) noexcept {
+    void deallocate(pointer p, ink_size) noexcept {
 #if defined(_MSC_VER)
         _aligned_free(p);
 #else
