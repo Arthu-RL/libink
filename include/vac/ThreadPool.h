@@ -11,11 +11,13 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "vac/vac_base.hpp"
+
 namespace vac {
 
 class ThreadPool {
 public:
-    ThreadPool(size_t max_workers);
+    ThreadPool(vac_size max_workers);
     ~ThreadPool();
 
     template <typename Function, typename... Args>
@@ -50,7 +52,7 @@ private:
 
     std::mutex _queueMutex;
     std::condition_variable _condition;
-    bool _stop;
+    vac_bool _stop;
 };
 
 }

@@ -1,11 +1,11 @@
-#include "../include/vac/threadpool.h"
+#include "../include/vac/ThreadPool.h"
 
 namespace vac {
 
-ThreadPool::ThreadPool(size_t max_workers) :
+ThreadPool::ThreadPool(vac_size max_workers) :
     _stop(false), _active_workers(0)
 {
-    for (size_t i = 0; i < max_workers; ++i)
+    for (vac_size i = 0; i < max_workers; ++i)
     {
         _workers.emplace_back([this] {
             while (true)

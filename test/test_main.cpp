@@ -1,6 +1,7 @@
 #include <iostream>
-#include "../include/vac/vac.hpp"
 #include <chrono>
+
+#include "../include/vac/vac.hpp"
 
 void runtime(std::function<void()>&& f) {
     auto start = std::chrono::high_resolution_clock::now();
