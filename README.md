@@ -1,10 +1,10 @@
-# VAC Library
+# INK Library
 
 ### A versatile and efficient collection of utilities and implementations
 
 # Overview
 
-VAC (Versatile Abstraction Kit) is a C++ library designed to provide a wide range of utilities and implementations for modern software development. It aims to deliver high-performance, flexible, and reusable solutions for common tasks, such as multi-threading, data processing, and more. Whether you're building complex systems or just need a fast, efficient helper for your application, VAC has you covered.
+INK (Implementations Notorious Kit) is a C++ library designed to provide a wide range of utilities and implementations for modern software development. It aims to deliver high-performance, flexible, and reusable solutions for common tasks, such as multi-threading, data processing, and more. Whether you're building complex systems or just need a fast, efficient helper for your application, INK has you covered.
 
 # Getting Started
 
@@ -17,16 +17,16 @@ VAC (Versatile Abstraction Kit) is a C++ library designed to provide a wide rang
 # Installation
 
 ```sh
-git clone https://github.com/Arthu-RL/vac.git
+git clone https://github.com/Arthu-RL/ink.git
 ```
 
 ```cmake
-add_subdirectory(vac)
-target_link_libraries(your_target vac)
+add_subdirectory(ink)
+target_link_libraries(your_target ink)
 ```
 
 ```cpp
-#include <vac/vac.hpp>
+#include <ink/ink.hpp>
 ```
 
 # Acknowledgements
