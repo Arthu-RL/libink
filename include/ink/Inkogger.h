@@ -7,6 +7,7 @@
 #include <sstream>
 #include <fstream>
 #include <mutex>
+#include <array>
 #include <unordered_map>
 #include <memory>
 
@@ -29,8 +30,47 @@ enum class LogLevel {
     INFO = 4,
     DEBUG = 5,
     VERBOSE = 6,
-    TRACE = 7
+    TRACE = 7,
+    COUNT
 };
+
+struct LevelMetadata {
+    constexpr LevelMetadata(const char* _color, const char* _desc) :
+        color(_color), desc(_desc)
+    {
+        // Empty
+    }
+    const char* color;
+    const char* desc;
+};
+
+// ANSI color codes for terminal output
+struct LoggerColors {
+    static constexpr const char* RESET   = "\033[0m";
+    static constexpr const char* BLACK   = "\033[30m";
+    static constexpr const char* RED     = "\033[31m";
+    static constexpr const char* GREEN   = "\033[32m";
+    static constexpr const char* YELLOW  = "\033[33m";
+    static constexpr const char* BLUE    = "\033[34m";
+    static constexpr const char* MAGENTA = "\033[35m";
+    static constexpr const char* CYAN    = "\033[36m";
+    static constexpr const char* DARK_GRAY = "\033[90;1m";
+    static constexpr const char* WHITE   = "\033[37m";
+    static constexpr const char* BOLD_RED    = "\033[31;1m";
+    static constexpr const char* BOLD    = "\033[1m";
+    static constexpr const char* UNDERLINE = "\033[4m";
+};
+
+static constexpr std::array<LevelMetadata, static_cast<size_t>(LogLevel::COUNT)> MAP_COLORS_FOR_LEVEL = {{
+    LevelMetadata("", "UNKNOWN"),
+    LevelMetadata(LoggerColors::BOLD_RED, "FATAL"),
+    LevelMetadata(LoggerColors::RED, "ERROR"),
+    LevelMetadata(LoggerColors::YELLOW, "WARN"),
+    LevelMetadata(LoggerColors::GREEN, "INFO"),
+    LevelMetadata(LoggerColors::BLUE, "DEBUG"),
+    LevelMetadata(LoggerColors::DARK_GRAY, "VERBOSE"),
+    LevelMetadata(LoggerColors::CYAN, "TRACE")
+}};
 
 class INK_API Inkogger {
 public:
@@ -40,23 +80,6 @@ public:
         std::string timestamp;
         std::string file;
         ink_u32 line;
-    };
-
-    // ANSI color codes for terminal output
-    struct Colors {
-        static constexpr const char* RESET   = "\033[0m";
-        static constexpr const char* BLACK   = "\033[30m";
-        static constexpr const char* RED     = "\033[31m";
-        static constexpr const char* GREEN   = "\033[32m";
-        static constexpr const char* YELLOW  = "\033[33m";
-        static constexpr const char* BLUE    = "\033[34m";
-        static constexpr const char* MAGENTA = "\033[35m";
-        static constexpr const char* CYAN    = "\033[36m";
-        static constexpr const char* DARK_GRAY = "\033[90;1m";
-        static constexpr const char* WHITE   = "\033[37m";
-        static constexpr const char* BOLD_RED    = "\033[31;1m";
-        static constexpr const char* BOLD    = "\033[1m";
-        static constexpr const char* UNDERLINE = "\033[4m";
     };
 
     Inkogger(const std::string& name);

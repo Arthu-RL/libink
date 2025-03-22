@@ -28,18 +28,18 @@ inline void ReportAssertionFailure(const char* expression, const std::string& me
 
     // Print to stderr with colors
     fprintf(stderr, "%s%sASSERTION FAILED: %s%s\n",
-            ink::Inkogger::Colors::BOLD, ink::Inkogger::Colors::RED,
-            expression, ink::Inkogger::Colors::RESET);
+            ink::LoggerColors::BOLD, ink::LoggerColors::RED,
+            expression, ink::LoggerColors::RESET);
 
     if (msg && msg[0] != '\0') {
         fprintf(stderr, "%s%sMessage: %s%s\n",
-                ink::Inkogger::Colors::BOLD, ink::Inkogger::Colors::RED,
-                msg, ink::Inkogger::Colors::RESET);
+                ink::LoggerColors::BOLD, ink::LoggerColors::RED,
+                msg, ink::LoggerColors::RESET);
     }
 
     fprintf(stderr, "%s%sLocation: %s:%d%s\n",
-            ink::Inkogger::Colors::BOLD, ink::Inkogger::Colors::RED,
-            filename, line, ink::Inkogger::Colors::RESET);
+            ink::LoggerColors::BOLD, ink::LoggerColors::RED,
+            filename, line, ink::LoggerColors::RESET);
 
 // Break into the debugger if available
 #if defined(_MSC_VER)

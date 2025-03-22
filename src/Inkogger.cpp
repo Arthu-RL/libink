@@ -27,37 +27,19 @@ void Inkogger::setLevel(LogLevel level)
 
 ink_bool Inkogger::isEnabled(LogLevel level) const
 {
-    return level >= m_Level;
+    return level <= m_Level;
 }
 
 std::string Inkogger::getColorForLevel(LogLevel level) const
 {
     if (!m_UseColors) return "";
 
-    switch (level) {
-        case LogLevel::TRACE: return Colors::CYAN;
-        case LogLevel::VERBOSE: return Colors::DARK_GRAY;
-        case LogLevel::DEBUG: return Colors::BLUE;
-        case LogLevel::INFO:  return Colors::GREEN;
-        case LogLevel::WARN:  return Colors::YELLOW;
-        case LogLevel::ERROR: return Colors::RED;
-        case LogLevel::FATAL: return Colors::BOLD_RED;
-        default:              return "";
-    }
+    return MAP_COLORS_FOR_LEVEL[static_cast<size_t>(level)].color;
 }
 
 std::string Inkogger::getLevelString(LogLevel level) const
 {
-    switch (level) {
-        case LogLevel::TRACE: return "TRACE";
-        case LogLevel::VERBOSE: return "VERBOSE";
-        case LogLevel::DEBUG: return "DEBUG";
-        case LogLevel::INFO:  return "INFO";
-        case LogLevel::WARN:  return "WARN";
-        case LogLevel::ERROR: return "ERROR";
-        case LogLevel::FATAL: return "FATAL";
-        default:              return "UNKNOWN";
-    }
+    return MAP_COLORS_FOR_LEVEL[static_cast<size_t>(level)].desc;
 }
 
 std::string Inkogger::getCurrentTimestamp() const
@@ -96,7 +78,7 @@ void Inkogger::log(LogLevel level, const std::string& message, const char* file,
     std::string timestamp = getCurrentTimestamp();
     std::string levelStr = getLevelString(level);
     std::string color = getColorForLevel(level);
-    std::string reset = m_UseColors ? Colors::RESET : "";
+    std::string reset = m_UseColors ? ink::LoggerColors::RESET : "";
 
     // Format: [timestamp] [level] [name]: message (file:line)
     ink_u32 len = snprintf(buffer, sizeof(buffer),

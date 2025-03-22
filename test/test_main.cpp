@@ -26,6 +26,19 @@ int main() {
     ink::ThreadPool pool(max_workers);
     std::vector<std::future<int>> futures;
 
+    ink::LogManager::getInstance().setGlobalLevel(ink::LogLevel::TRACE);
+
+    INK_DEBUG << "test";
+    INK_TRACE << "test";
+    INK_VERBOSE << "test";
+    INK_INFO << "test";
+    INK_WARN << "test";
+    INK_ERROR << "test";
+    INK_FATAL << "test";
+
+    INK_ASSERT(1==1);
+    INK_ASSERT_MSG(1==1, "TEST");
+
     // Submit tasks to the thread pool
     runtime([&](){
         for (int i = 0; i < max_workers; ++i)
