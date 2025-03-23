@@ -78,4 +78,20 @@ private:
 
 }
 
+namespace std {
+template<>
+struct hash<ink::WString> {
+    std::size_t operator()(const ink::WString& str) const noexcept {
+        // Use FNV-1a hash algorithm - fast and good distribution
+        std::size_t hash = 14695981039346656037ULL; // FNV offset basis
+        const char* data = str.c_str();
+        for (std::size_t i = 0; i < str.length(); ++i) {
+            hash ^= static_cast<std::size_t>(data[i]);
+            hash *= 1099511628211ULL; // FNV prime
+        }
+        return hash;
+    }
+};
+}
+
 #endif // WSTRING_H
