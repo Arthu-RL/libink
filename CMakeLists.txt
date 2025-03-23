@@ -33,7 +33,7 @@ file(GLOB_RECURSE HEADERS
 # Define the library
 add_library(${PROJECT_NAME} STATIC
     ${SOURCES}
-    ${HEADERS}  # Adding headers to the target for IDE integration
+    ${HEADERS}
 )
 
 # Set include directories for the target
