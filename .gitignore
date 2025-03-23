@@ -2,6 +2,7 @@
 /build/
 /bin/
 /out/
+releases/
 
 # Ignore compiled object files
 *.o

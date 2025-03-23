@@ -13,15 +13,15 @@
 /*====================
  * INCLUDE MODULES
  *====================*/
-#include <ink/ink.hpp>
-#include <ink/ThreadPool.h>
 #include <ink/AlignedAllocator.h>
-#include <ink/LastWish.h>
 #include <ink/EnhancedJson.h>
 #include <ink/EnhancedJsonUtils.h>
 #include <ink/Inkogger.h>
 #include <ink/InkAssert.h>
 #include <ink/InkException.h>
+#include <ink/LastWish.h>
+#include <ink/ThreadPool.h>
+#include <ink/WString.h>
 #include <ink/utils.h>
 
 #endif
