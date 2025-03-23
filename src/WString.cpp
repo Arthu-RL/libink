@@ -3,15 +3,19 @@
 #include <cstring>
 #include <cctype>
 
+namespace ink {
 // Default constructor
-WString::WString() : _is_small(true) {
+WString::WString() : _is_small(true)
+{
     _data.stack.buffer[0] = '\0';
     _data.stack.size = 0;
 }
 
 // C-string constructor
-WString::WString(const char *s) : _is_small(true) {
-    if (s == nullptr) {
+WString::WString(const char *s) : _is_small(true)
+{
+    if (s == nullptr)
+    {
         _data.stack.buffer[0] = '\0';
         _data.stack.size = 0;
         return;
@@ -19,11 +23,14 @@ WString::WString(const char *s) : _is_small(true) {
 
     size_t len = std::strlen(s);
 
-    if (len < SSO_SIZE) {
+    if (len < SSO_SIZE)
+    {
         // Use small string optimization
         std::memcpy(_data.stack.buffer, s, len + 1);
         _data.stack.size = static_cast<unsigned char>(len);
-    } else {
+    }
+    else
+    {
         // Use heap allocation
         _is_small = false;
         _data.heap.size = len;
@@ -39,12 +46,16 @@ WString::WString(const WString &src) {
 }
 
 // Move constructor
-WString::WString(WString &&src) noexcept : _is_small(src._is_small) {
-    if (src._is_small) {
+WString::WString(WString &&src) noexcept : _is_small(src._is_small)
+{
+    if (src._is_small)
+    {
         // Copy small string data
         std::memcpy(_data.stack.buffer, src._data.stack.buffer, SSO_SIZE);
         _data.stack.size = src._data.stack.size;
-    } else {
+    }
+    else
+    {
         // Move heap data
         _data.heap.ptr = src._data.heap.ptr;
         _data.heap.size = src._data.heap.size;
@@ -64,8 +75,10 @@ WString::~WString() {
 }
 
 // C-string assignment
-WString &WString::operator=(const char* str) {
-    if (str == nullptr) {
+WString &WString::operator=(const char* str)
+{
+    if (str == nullptr)
+    {
         _deallocate();
         _is_small = true;
         _data.stack.buffer[0] = '\0';
@@ -76,16 +89,20 @@ WString &WString::operator=(const char* str) {
     size_t len = std::strlen(str);
 
     // First deallocate if we have heap memory
-    if (!_is_small) {
+    if (!_is_small)
+    {
         delete[] _data.heap.ptr;
     }
 
-    if (len < SSO_SIZE) {
+    if (len < SSO_SIZE)
+    {
         // Use small string optimization
         _is_small = true;
         std::memcpy(_data.stack.buffer, str, len + 1);
         _data.stack.size = static_cast<unsigned char>(len);
-    } else {
+    }
+    else
+    {
         // Use heap allocation
         _is_small = false;
         _data.heap.size = len;
@@ -98,7 +115,8 @@ WString &WString::operator=(const char* str) {
 }
 
 // Copy assignment
-WString &WString::operator=(const WString &src) {
+WString &WString::operator=(const WString &src)
+{
     if (this == &src) return *this;
 
     _deallocate();
@@ -107,17 +125,21 @@ WString &WString::operator=(const WString &src) {
 }
 
 // Move assignment
-WString &WString::operator=(WString &&src) noexcept {
+WString &WString::operator=(WString &&src) noexcept
+{
     if (this == &src) return *this;
 
     _deallocate();
 
     _is_small = src._is_small;
-    if (src._is_small) {
+    if (src._is_small)
+    {
         // Copy small string data
         std::memcpy(_data.stack.buffer, src._data.stack.buffer, SSO_SIZE);
         _data.stack.size = src._data.stack.size;
-    } else {
+    }
+    else
+    {
         // Move heap data
         _data.heap.ptr = src._data.heap.ptr;
         _data.heap.size = src._data.heap.size;
@@ -134,53 +156,72 @@ WString &WString::operator=(WString &&src) noexcept {
 }
 
 // Equality comparison
-bool WString::operator==(const WString &rhs) const {
+bool WString::operator==(const WString &rhs) const
+{
     if (length() != rhs.length()) return false;
 
-    if (_is_small && rhs._is_small) {
+    if (_is_small && rhs._is_small)
+    {
         return std::strcmp(_data.stack.buffer, rhs._data.stack.buffer) == 0;
-    } else if (!_is_small && !rhs._is_small) {
+    }
+    else if (!_is_small && !rhs._is_small)
+    {
         return std::strcmp(_data.heap.ptr, rhs._data.heap.ptr) == 0;
-    } else if (_is_small) {
+    }
+    else if (_is_small)
+    {
         return std::strcmp(_data.stack.buffer, rhs._data.heap.ptr) == 0;
-    } else {
+    }
+    else
+    {
         return std::strcmp(_data.heap.ptr, rhs._data.stack.buffer) == 0;
     }
 }
 
 // Inequality comparison
-bool WString::operator!=(const WString &rhs) const {
+bool WString::operator!=(const WString &rhs) const
+{
     return !(*this == rhs);
 }
 
 // String concatenation
-WString WString::operator+(const WString &rhs) const {
+WString WString::operator+(const WString &rhs) const
+{
     size_t left_len = length();
     size_t right_len = rhs.length();
     size_t total_len = left_len + right_len;
 
     WString result;
 
-    if (total_len < SSO_SIZE) {
+    if (total_len < SSO_SIZE)
+    {
         // Result fits in small string
         result._is_small = true;
 
         // Copy left part
-        if (_is_small) {
+        if (_is_small)
+        {
             std::memcpy(result._data.stack.buffer, _data.stack.buffer, left_len);
-        } else {
+        }
+        else
+        {
             std::memcpy(result._data.stack.buffer, _data.heap.ptr, left_len);
         }
 
         // Copy right part
-        if (rhs._is_small) {
+        if (rhs._is_small)
+        {
             std::memcpy(result._data.stack.buffer + left_len, rhs._data.stack.buffer, right_len + 1);
-        } else {
+        }
+        else
+        {
             std::memcpy(result._data.stack.buffer + left_len, rhs._data.heap.ptr, right_len + 1);
         }
 
         result._data.stack.size = static_cast<unsigned char>(total_len);
-    } else {
+    }
+    else
+    {
         // Result needs heap allocation
         result._is_small = false;
         result._data.heap.size = total_len;
@@ -188,16 +229,22 @@ WString WString::operator+(const WString &rhs) const {
         result._data.heap.ptr = new char[total_len + 1];
 
         // Copy left part
-        if (_is_small) {
+        if (_is_small)
+        {
             std::memcpy(result._data.heap.ptr, _data.stack.buffer, left_len);
-        } else {
+        }
+        else
+        {
             std::memcpy(result._data.heap.ptr, _data.heap.ptr, left_len);
         }
 
         // Copy right part
-        if (rhs._is_small) {
+        if (rhs._is_small)
+        {
             std::memcpy(result._data.heap.ptr + left_len, rhs._data.stack.buffer, right_len + 1);
-        } else {
+        }
+        else
+        {
             std::memcpy(result._data.heap.ptr + left_len, rhs._data.heap.ptr, right_len + 1);
         }
     }
@@ -206,39 +253,52 @@ WString WString::operator+(const WString &rhs) const {
 }
 
 // Compound addition assignment
-WString& WString::operator+=(const WString &rhs) {
+WString& WString::operator+=(const WString &rhs)
+{
     size_t left_len = length();
     size_t right_len = rhs.length();
     size_t total_len = left_len + right_len;
 
-    if (_is_small && total_len < SSO_SIZE) {
+    if (_is_small && total_len < SSO_SIZE)
+    {
         // Current is small and result fits in small string
-        if (rhs._is_small) {
+        if (rhs._is_small)
+        {
             std::memcpy(_data.stack.buffer + left_len, rhs._data.stack.buffer, right_len + 1);
-        } else {
+        }
+        else
+        {
             std::memcpy(_data.stack.buffer + left_len, rhs._data.heap.ptr, right_len + 1);
         }
         _data.stack.size = static_cast<unsigned char>(total_len);
-    } else {
+    }
+    else
+    {
         // Need heap allocation
         char* new_buffer = new char[total_len + 1];
 
         // Copy this string
-        if (_is_small) {
+        if (_is_small)
+        {
             std::memcpy(new_buffer, _data.stack.buffer, left_len);
-        } else {
+        }
+        else
+        {
             std::memcpy(new_buffer, _data.heap.ptr, left_len);
         }
 
         // Copy rhs string
         if (rhs._is_small) {
             std::memcpy(new_buffer + left_len, rhs._data.stack.buffer, right_len + 1);
-        } else {
+        }
+        else
+        {
             std::memcpy(new_buffer + left_len, rhs._data.heap.ptr, right_len + 1);
         }
 
         // Deallocate old buffer if needed
-        if (!_is_small) {
+        if (!_is_small)
+        {
             delete[] _data.heap.ptr;
         }
 
@@ -253,15 +313,21 @@ WString& WString::operator+=(const WString &rhs) {
 }
 
 // Create lowercase version of string
-WString WString::to_lower() const noexcept {
+WString WString::to_lower() const noexcept
+{
     WString result(*this);
 
-    if (result._is_small) {
-        for (size_t i = 0; i < result._data.stack.size; ++i) {
+    if (result._is_small)
+    {
+        for (size_t i = 0; i < result._data.stack.size; ++i)
+        {
             result._data.stack.buffer[i] = std::tolower(result._data.stack.buffer[i]);
         }
-    } else {
-        for (size_t i = 0; i < result._data.heap.size; ++i) {
+    }
+    else
+    {
+        for (size_t i = 0; i < result._data.heap.size; ++i)
+        {
             result._data.heap.ptr[i] = std::tolower(result._data.heap.ptr[i]);
         }
     }
@@ -269,8 +335,21 @@ WString WString::to_lower() const noexcept {
     return result;
 }
 
+std::string WString::toStdString() const noexcept
+{
+    if (_is_small)
+    {
+        return std::string(_data.stack.buffer);
+    }
+    else
+    {
+        return std::string(_data.heap.ptr);
+    }
+}
+
 // Get string length
-size_t WString::length() const noexcept {
+size_t WString::length() const noexcept
+{
     return _is_small ? _data.stack.size : _data.heap.size;
 }
 
@@ -300,7 +379,8 @@ bool WString::empty() const noexcept {
 }
 
 // Display string info
-void WString::display() const {
+void WString::display() const
+{
     std::cout << (_is_small ? _data.stack.buffer : _data.heap.ptr)
     << ": length=" << length()
     << ", capacity=" << capacity()
@@ -309,13 +389,15 @@ void WString::display() const {
 }
 
 // Stream output operator
-std::ostream &operator<<(std::ostream &os, const WString &obj) {
+std::ostream &operator<<(std::ostream &os, const WString &obj)
+{
     os << (obj._is_small ? obj._data.stack.buffer : obj._data.heap.ptr);
     return os;
 }
 
 // Private helper to allocate memory
-void WString::_allocate(size_t capacity) {
+void WString::_allocate(size_t capacity)
+{
     if (capacity < SSO_SIZE) {
         _is_small = true;
     } else {
@@ -328,38 +410,47 @@ void WString::_allocate(size_t capacity) {
 }
 
 // Private helper to deallocate memory
-void WString::_deallocate() {
-    if (!_is_small && _data.heap.ptr != nullptr) {
+void WString::_deallocate()
+{
+    if (!_is_small && _data.heap.ptr != nullptr)
+    {
         delete[] _data.heap.ptr;
         _data.heap.ptr = nullptr;
     }
 }
 
 // Check if using small string optimization
-bool WString::_is_using_sso() const noexcept {
+bool WString::_is_using_sso() const noexcept
+{
     return _is_small;
 }
 
 // Set string size
-void WString::_set_size(size_t size) noexcept {
-    if (_is_small) {
+void WString::_set_size(size_t size) noexcept
+{
+    if (_is_small)
         _data.stack.size = static_cast<unsigned char>(size);
-    } else {
+    else
         _data.heap.size = size;
-    }
 }
 
 // Copy from another WString
-void WString::_copy_from(const WString& other) {
+void WString::_copy_from(const WString& other)
+{
     _is_small = other._is_small;
 
-    if (other._is_small) {
+    if (other._is_small)
+    {
         std::memcpy(_data.stack.buffer, other._data.stack.buffer, SSO_SIZE);
         _data.stack.size = other._data.stack.size;
-    } else {
+    }
+    else
+    {
         _data.heap.size = other._data.heap.size;
         _data.heap.capacity = other._data.heap.capacity;
         _data.heap.ptr = new char[other._data.heap.capacity];
         std::memcpy(_data.heap.ptr, other._data.heap.ptr, other._data.heap.capacity);
     }
+}
+
 }

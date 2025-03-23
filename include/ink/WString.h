@@ -1,9 +1,13 @@
 #ifndef WSTRING_H
 #define WSTRING_H
 
+#pragma once
+
 #include <ostream>
 #include <cstddef>
 #include <cstring>
+
+namespace ink {
 
 class WString {
     friend std::ostream &operator<<(std::ostream &os, const WString &obj);
@@ -31,6 +35,7 @@ public:
 
     // Utility methods
     WString to_lower() const noexcept;
+    std::string toStdString() const noexcept;
 
     // Accessors
     size_t length() const noexcept;
@@ -70,5 +75,7 @@ private:
     void _set_size(size_t size) noexcept;
     void _copy_from(const WString& other);
 };
+
+}
 
 #endif // WSTRING_H
