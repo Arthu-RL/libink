@@ -49,7 +49,7 @@ public:
     void display() const;
 
 private:
-    static constexpr size_t SSO_SIZE = 16; // Small string optimization buffer size
+    static constexpr size_t SSO_SIZE = 64; // Small string optimization buffer size
 
     // Internal structure with union for Small String Optimization (SSO)
     union Data {
