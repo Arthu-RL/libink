@@ -62,13 +62,13 @@ public:
      * @param function Source function name
      */
     explicit INKException(
-        ink_result_t result,
+        ink_i32 result_code,
         const std::string& message,
         const char* file = __FILE__,
         ink_u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) :
-        m_result(result),
+        m_result_code(result_code),
         m_message(message),
         m_file(file),
         m_function(function),
@@ -118,8 +118,8 @@ public:
      * @brief Get the result code
      * @return The result code
      */
-    ink_result_t result() const noexcept {
-        return m_result;
+    ink_i32 result_code() const noexcept {
+        return m_result_code;
     }
 
     /**
@@ -249,8 +249,8 @@ protected:
         oss << "\n";
 
         // Add result code if available
-        if (m_result != ink_result_t::SUCCESS) {
-            oss << "  Result Code: " << static_cast<int>(m_result) << "\n";
+        if (m_result_code != static_cast<ink_i32>(ink_result_t::SUCCESS)) {
+            oss << "  Result Code: " << static_cast<int>(m_result_code) << "\n";
         }
 
         // Add timestamp
@@ -305,7 +305,7 @@ protected:
 
 protected:
     // Protected data members accessible to derived classes
-    ink_result_t m_result = ink_result_t::SUCCESS;
+    ink_i32 m_result_code = static_cast<ink_i32>(ink_result_t::SUCCESS);
     std::string m_message;
     std::string m_file;
     std::string m_function;

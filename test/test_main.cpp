@@ -24,7 +24,7 @@ int main() {
     // Create a thread pool with 4 threads
     int max_workers = 4;
     ink::ThreadPool pool(max_workers);
-    std::vector<std::future<int>> futures;
+    // std::vector<std::future<int>> futures;
 
     ink::LogManager::getInstance().setGlobalLevel(ink::LogLevel::TRACE);
 
@@ -43,15 +43,13 @@ int main() {
     runtime([&](){
         for (int i = 0; i < max_workers; ++i)
         {
-            futures.push_back(pool.submit(add, max_workers, i));
+            pool.submit(add, max_workers, i);
         }
 
-        for (int i = 0; i < max_workers; ++i)
-        {
-            std::cout << "Result " << i+1 << ": " << futures[i].get() << std::endl;
-        }
-        // pool.wait();
+        pool.wait();
     });
+
+    INK_DEBUG << "async";
 
     return 0;
 }
