@@ -10,6 +10,7 @@
 #include <functional>
 #include <mutex>
 #include <condition_variable>
+#include <tbb/concurrent_queue.h>
 
 #include "ink/ink_base.hpp"
 
@@ -34,11 +35,10 @@ public:
         );
 
         std::future<ReturnType> res = task->get_future();
-        {
-            std::unique_lock<std::mutex> lock(_queueMutex);
-            if (_stop) throw std::runtime_error("ThreadPool is stopped");
-            _tasks.emplace([task]() { (*task)(); });
-        }
+
+        if (_stop.load()) throw std::runtime_error("ThreadPool is stopped");
+        _tasks.push([task]() { (*task)(); });
+
         _condition.notify_one();
         return res;
     }
@@ -48,11 +48,11 @@ public:
 private:
     std::vector<std::thread> _workers;
     std::atomic<int> _active_workers;
-    std::queue<std::function<void()>> _tasks;
+    tbb::concurrent_queue<std::function<void()>> _tasks;
 
-    std::mutex _queueMutex;
+    std::mutex _tpMutex;
     std::condition_variable _condition;
-    ink_bool _stop;
+    std::atomic<ink_bool> _stop;
 };
 
 }
