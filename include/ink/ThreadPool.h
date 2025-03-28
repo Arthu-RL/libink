@@ -25,13 +25,12 @@ public:
     {
         using ReturnType = std::invoke_result_t<Function, Args...>;
 
-        auto task = std::make_shared<std::packaged_task<ReturnType()>>
-            (
-                [fn = std::forward<Function>(f), tpl = std::make_tuple(std::forward<Args>(args)...)]() mutable -> ReturnType
-                {
-                    return std::apply(std::move(fn), std::move(tpl));
-                }
-            );
+        auto task = std::make_shared<std::packaged_task<ReturnType()>>(
+            [fn = std::forward<Function>(f), tpl = std::make_tuple(std::forward<Args>(args)...)]() mutable -> ReturnType
+            {
+                return std::apply(std::move(fn), std::move(tpl));
+            }
+        );
 
         std::future<ReturnType> res = task->get_future();
 
