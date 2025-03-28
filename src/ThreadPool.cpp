@@ -3,7 +3,7 @@
 namespace ink {
 
 ThreadPool::ThreadPool(ink_size max_workers) :
-    _stop(false), _active_workers(0)
+    _stop(false)
 {
     for (ink_size i = 0; i < max_workers; ++i)
     {
@@ -13,20 +13,16 @@ ThreadPool::ThreadPool(ink_size max_workers) :
                 std::function<void()> task;
                 {
                     std::unique_lock<std::mutex> lock(_tpMutex);
-                    _condition.wait(lock, [this]{ return _stop.load() || !_tasks.empty(); });
+                    _condition.wait(lock, [this]{ return _stop || !_tasks.empty(); });
 
-                    if (_stop.load() && _tasks.empty()) return;
+                    if (_stop && _tasks.empty()) return;
+
+                    if (_tasks.empty()) continue;
+                    task = std::move(_tasks.front());
+                    _tasks.pop();
                 }
 
-                if (_tasks.try_pop(task))
-                {
-                    _active_workers++;
-                    task();
-                    _active_workers--;
-                }
-
-                if (_tasks.empty() && _active_workers.load() == 0)
-                    _condition.notify_all();
+                task();
             }
         });
     }
@@ -34,20 +30,16 @@ ThreadPool::ThreadPool(ink_size max_workers) :
 
 ThreadPool::~ThreadPool()
 {
-    _stop.store(true);
+    {
+        std::lock_guard<std::mutex> lock(_tpMutex);
+        _stop = true;
+    }
+
     _condition.notify_all();
 
     for (std::thread& worker : _workers) {
         worker.join();
     }
-}
-
-void ThreadPool::wait()
-{
-    std::unique_lock<std::mutex> lock(_tpMutex);
-    _condition.wait(lock, [this] {
-        return _tasks.empty() && (_active_workers.load() == 0);
-    });
 }
 
 }
