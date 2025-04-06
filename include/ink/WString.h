@@ -14,8 +14,8 @@ class WString {
 
 public:
     // Constructors and destructor
-    WString();                          // Default constructor
-    WString(const char *s);             // C-string constructor
+    WString(size_t small_buffer_size = 64);
+    WString(const char *s, size_t small_buffer_size = 64);
     WString(const WString &src);        // Copy constructor
     WString(WString &&src) noexcept;    // Move constructor
     ~WString();                         // Destructor
@@ -33,24 +33,23 @@ public:
     WString operator+(const WString &rhs) const;
     WString& operator+=(const WString &rhs);
 
-    // Utility methods
     WString to_lower() const noexcept;
+    // Convert to std::string. Obs: not good for high performance requirements
     std::string toStdString() const noexcept;
 
-    // Accessors
     size_t length() const noexcept;
+    // Get string capacity
     size_t capacity() const noexcept;
+    // Get C-string representation. Obs: good for high performance usage
     const char* c_str() const noexcept;
+    // Get mutable data pointer
     char* data() noexcept;
-    const char* data() const noexcept;
     bool empty() const noexcept;
 
     // Display function (for debugging)
     void display() const;
 
 private:
-    static constexpr size_t SSO_SIZE = 64; // Small string optimization buffer size
-
     // Internal structure with union for Small String Optimization (SSO)
     union Data {
         struct {
@@ -60,13 +59,15 @@ private:
         } heap;
 
         struct {
-            char buffer[SSO_SIZE]; // Small string buffer
+            char buffer[1]; // Small string buffer
             unsigned char size;    // String length (restricted by SSO_SIZE)
         } stack;
+
+        bool is_small;
+        size_t sso_capacity;
     };
 
-    Data _data;
-    bool _is_small;  // Flag to indicate if we're using stack storage
+    Data* _data;
 
     // Private utility functions
     void _allocate(size_t capacity);
@@ -74,6 +75,7 @@ private:
     bool _is_using_sso() const noexcept;
     void _set_size(size_t size) noexcept;
     void _copy_from(const WString& other);
+    static size_t _calculate_data_size(size_t sso_capacity);
 };
 
 }

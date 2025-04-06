@@ -22,6 +22,7 @@
 #include <ink/LastWish.h>
 #include <ink/InkedList.h>
 #include <ink/InkQueue.h>
+#include <ink/RingBuffer.h>
 #include <ink/ThreadPool.h>
 #include <ink/WString.h>
 #include <ink/utils.h>
