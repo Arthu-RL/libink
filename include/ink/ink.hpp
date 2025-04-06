@@ -20,6 +20,7 @@
 #include <ink/InkAssert.h>
 #include <ink/InkException.h>
 #include <ink/LastWish.h>
+#include <ink/InkedList.h>
 #include <ink/InkQueue.h>
 #include <ink/ThreadPool.h>
 #include <ink/WString.h>

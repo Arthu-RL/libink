@@ -17,7 +17,7 @@ releases/
 # Ignore CMake or other build system files
 CMakeCache.txt
 CMakeFiles/
-CMakeLists.txt.user
+CMakeLists.txt.user*
 
 # Ignore IDE specific files
 .vscode/
