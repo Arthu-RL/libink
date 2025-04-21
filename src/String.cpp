@@ -1,11 +1,11 @@
-#include "../include/ink/WString.h"
+#include "../include/ink/String.h"
 #include <iostream>
 #include <cstring>
 #include <cctype>
 
 namespace ink {
 
-WString::WString(size_t small_buffer_size)
+String::String(size_t small_buffer_size)
 {
     _data = static_cast<Data*>(::operator new(_calculate_data_size(small_buffer_size)));
     _data->is_small = true;
@@ -13,7 +13,7 @@ WString::WString(size_t small_buffer_size)
     _data->stack.buffer[0] = '\0';
 }
 
-WString::WString(const char *s, size_t small_buffer_size)
+String::String(const char *s, size_t small_buffer_size)
 {
     _data = static_cast<Data*>(::operator new(_calculate_data_size(small_buffer_size)));
     _data->sso_capacity = small_buffer_size;
@@ -41,23 +41,23 @@ WString::WString(const char *s, size_t small_buffer_size)
     }
 }
 
-WString::WString(const WString &src)
+String::String(const String &src)
 {
     _copy_from(src);
 }
 
-WString::WString(WString &&src) noexcept
+String::String(String &&src) noexcept
 {
     _data = src._data;
     src._data = nullptr;
 }
 
-WString::~WString()
+String::~String()
 {
     _deallocate();
 }
 
-WString &WString::operator=(const char* str)
+String &String::operator=(const char* str)
 {
     if (str == nullptr)
     {
@@ -118,7 +118,7 @@ WString &WString::operator=(const char* str)
     return *this;
 }
 
-WString &WString::operator=(const WString &src)
+String &String::operator=(const String &src)
 {
     if (this == &src) return *this;
     _deallocate();
@@ -126,7 +126,7 @@ WString &WString::operator=(const WString &src)
     return *this;
 }
 
-WString &WString::operator=(WString &&src) noexcept
+String &String::operator=(String &&src) noexcept
 {
     if (this == &src) return *this;
     _deallocate();
@@ -135,25 +135,25 @@ WString &WString::operator=(WString &&src) noexcept
     return *this;
 }
 
-bool WString::operator==(const WString &rhs) const
+bool String::operator==(const String &rhs) const
 {
     if (length() != rhs.length()) return false;
     return std::strcmp(c_str(), rhs.c_str()) == 0;
 }
 
-bool WString::operator!=(const WString &rhs) const
+bool String::operator!=(const String &rhs) const
 {
     return !(*this == rhs);
 }
 
-WString WString::operator+(const WString &rhs) const
+String String::operator+(const String &rhs) const
 {
-    WString result(*this);
+    String result(*this);
     result += rhs;
     return result;
 }
 
-WString& WString::operator+=(const WString &rhs)
+String& String::operator+=(const String &rhs)
 {
     size_t left_len = length();
     size_t right_len = rhs.length();
@@ -201,9 +201,9 @@ WString& WString::operator+=(const WString &rhs)
     return *this;
 }
 
-WString WString::to_lower() const noexcept
+String String::to_lower() const noexcept
 {
-    WString result(*this);
+    String result(*this);
     char* data_ptr = result.data();
 
     for (size_t i = 0; i < result.length(); ++i)
@@ -214,12 +214,12 @@ WString WString::to_lower() const noexcept
     return result;
 }
 
-std::string WString::toStdString() const noexcept
+std::string String::toStdString() const noexcept
 {
     return std::string(c_str(), length());
 }
 
-size_t WString::length() const noexcept
+size_t String::length() const noexcept
 {
     if (_data->is_small)
     {
@@ -231,7 +231,7 @@ size_t WString::length() const noexcept
     }
 }
 
-size_t WString::capacity() const noexcept
+size_t String::capacity() const noexcept
 {
     if (_data->is_small)
     {
@@ -243,7 +243,7 @@ size_t WString::capacity() const noexcept
     }
 }
 
-const char* WString::c_str() const noexcept
+const char* String::c_str() const noexcept
 {
     if (_data->is_small)
     {
@@ -255,7 +255,7 @@ const char* WString::c_str() const noexcept
     }
 }
 
-char* WString::data() noexcept
+char* String::data() noexcept
 {
     if (_data->is_small)
     {
@@ -267,12 +267,12 @@ char* WString::data() noexcept
     }
 }
 
-bool WString::empty() const noexcept
+bool String::empty() const noexcept
 {
     return length() == 0;
 }
 
-void WString::display() const
+void String::display() const
 {
     std::cout << c_str()
     << ": length=" << length()
@@ -282,13 +282,13 @@ void WString::display() const
     << std::endl;
 }
 
-std::ostream &operator<<(std::ostream &os, const WString &obj)
+std::ostream &operator<<(std::ostream &os, const String &obj)
 {
     os << obj.c_str();
     return os;
 }
 
-void WString::_deallocate()
+void String::_deallocate()
 {
     if (_data)
     {
@@ -301,12 +301,12 @@ void WString::_deallocate()
     }
 }
 
-bool WString::_is_using_sso() const noexcept
+bool String::_is_using_sso() const noexcept
 {
     return _data->is_small;
 }
 
-void WString::_set_size(size_t size) noexcept
+void String::_set_size(size_t size) noexcept
 {
     if (_data->is_small)
     {
@@ -322,7 +322,7 @@ void WString::_set_size(size_t size) noexcept
     }
 }
 
-void WString::_copy_from(const WString& other)
+void String::_copy_from(const String& other)
 {
     _data = static_cast<Data*>(::operator new(_calculate_data_size(other._data->sso_capacity)));
     _data->sso_capacity = other._data->sso_capacity;
@@ -341,7 +341,7 @@ void WString::_copy_from(const WString& other)
     }
 }
 
-size_t WString::_calculate_data_size(size_t sso_capacity)
+size_t String::_calculate_data_size(size_t sso_capacity)
 {
     return sizeof(Data) + sso_capacity;
 }

@@ -1,5 +1,5 @@
-#ifndef WSTRING_H
-#define WSTRING_H
+#ifndef STRING_H
+#define STRING_H
 
 #pragma once
 
@@ -9,31 +9,31 @@
 
 namespace ink {
 
-class WString {
-    friend std::ostream &operator<<(std::ostream &os, const WString &obj);
+class String {
+    friend std::ostream &operator<<(std::ostream &os, const String &obj);
 
 public:
     // Constructors and destructor
-    WString(size_t small_buffer_size = 64);
-    WString(const char *s, size_t small_buffer_size = 64);
-    WString(const WString &src);        // Copy constructor
-    WString(WString &&src) noexcept;    // Move constructor
-    ~WString();                         // Destructor
+    String(size_t small_buffer_size = 64);
+    String(const char *s, size_t small_buffer_size = 64);
+    String(const String &src);        // Copy constructor
+    String(String &&src) noexcept;    // Move constructor
+    ~String();                         // Destructor
 
     // Assignment operators
-    WString &operator=(const char* str);      // C-string assignment
-    WString &operator=(const WString &src);   // Copy assignment
-    WString &operator=(WString &&src) noexcept; // Move assignment
+    String &operator=(const char* str);      // C-string assignment
+    String &operator=(const String &src);   // Copy assignment
+    String &operator=(String &&src) noexcept; // Move assignment
 
     // Comparison operators
-    bool operator==(const WString &rhs) const;
-    bool operator!=(const WString &rhs) const;
+    bool operator==(const String &rhs) const;
+    bool operator!=(const String &rhs) const;
 
     // Concatenation operators
-    WString operator+(const WString &rhs) const;
-    WString& operator+=(const WString &rhs);
+    String operator+(const String &rhs) const;
+    String& operator+=(const String &rhs);
 
-    WString to_lower() const noexcept;
+    String to_lower() const noexcept;
     // Convert to std::string. Obs: not good for high performance requirements
     std::string toStdString() const noexcept;
 
@@ -74,7 +74,7 @@ private:
     void _deallocate();
     bool _is_using_sso() const noexcept;
     void _set_size(size_t size) noexcept;
-    void _copy_from(const WString& other);
+    void _copy_from(const String& other);
     static size_t _calculate_data_size(size_t sso_capacity);
 };
 
@@ -82,8 +82,8 @@ private:
 
 namespace std {
 template<>
-struct hash<ink::WString> {
-    size_t operator()(const ink::WString& str) const noexcept {
+struct hash<ink::String> {
+    size_t operator()(const ink::String& str) const noexcept {
         // Use FNV-1a hash algorithm - fast and good distribution
         size_t hash = 14695981039346656037ULL; // FNV offset basis
         const char* data = str.c_str();
@@ -96,4 +96,4 @@ struct hash<ink::WString> {
 };
 }
 
-#endif // WSTRING_H
+#endif // String_H

@@ -1,5 +1,5 @@
-#ifndef INKQUEUE_H
-#define INKQUEUE_H
+#ifndef QUEUE_H
+#define QUEUE_H
 
 #pragma once
 
@@ -14,7 +14,7 @@
 namespace ink {
 
 template<typename T>
-class INK_API InkQueue {
+class INK_API Queue {
 private:
     mutable std::mutex mutex_;
     std::queue<T> data_queue_;
@@ -22,12 +22,12 @@ private:
     std::atomic<bool> done_;
 
 public:
-    InkQueue() : done_(false) {}
+    Queue() : done_(false) {}
 
-    InkQueue(const InkQueue&) = delete;
-    InkQueue& operator=(const InkQueue&) = delete;
+    Queue(const Queue&) = delete;
+    Queue& operator=(const Queue&) = delete;
 
-    ~InkQueue() {
+    ~Queue() {
         shutdown();
     }
 
@@ -130,4 +130,4 @@ public:
 
 }
 
-#endif // INKQUEUE_H
+#endif // Queue_H

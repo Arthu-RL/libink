@@ -20,11 +20,12 @@
 #include <ink/InkAssert.h>
 #include <ink/InkException.h>
 #include <ink/LastWish.h>
+#include <ink/ArgParser.h>
 #include <ink/InkedList.h>
-#include <ink/InkQueue.h>
+#include <ink/Queue.h>
 #include <ink/RingBuffer.h>
 #include <ink/ThreadPool.h>
-#include <ink/WString.h>
+#include <ink/String.h>
 #include <ink/utils.h>
 
 

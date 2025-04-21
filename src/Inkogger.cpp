@@ -20,6 +20,11 @@ Inkogger::~Inkogger()
     }
 }
 
+void Inkogger::setName(const std::string& name)
+{
+    m_Name = name;
+}
+
 void Inkogger::setLevel(LogLevel level)
 {
     m_Level = level;
@@ -55,6 +60,24 @@ std::string Inkogger::getCurrentTimestamp() const
     return ss.str();
 }
 
+void Inkogger::log(LogLevel level, const std::string& message)
+{
+    if (level == LogLevel::OFF && message.size() > 0)
+    {
+        const char* result = message.data();
+        // Output to console - use fwrite for better performance than cout
+        fwrite(result, 1, message.size(), stdout);
+        fwrite("\n", 1, 1, stdout);
+        fflush(stdout);
+
+        // Output to file if enabled
+        if (m_LogToFile && m_FileStream.is_open())
+        {
+            m_FileStream << result << std::endl;
+        }
+    }
+}
+
 void Inkogger::log(LogLevel level, const std::string& message, const char* file, ink_u32 line)
 {
     // This check is redundant with the macro check, but kept for safety
@@ -71,50 +94,48 @@ void Inkogger::log(LogLevel level, const std::string& message, const char* file,
         filename = lastBackslash + 1;
     }
 
-    // Use a buffer for formatting to avoid stringstream overhead
-    thread_local char buffer[4096];
     std::lock_guard<std::mutex> lock(m_Mutex);
 
     std::string timestamp = getCurrentTimestamp();
     std::string levelStr = getLevelString(level);
     std::string color = getColorForLevel(level);
     std::string reset = m_UseColors ? ink::LoggerColors::RESET : "";
+    std::string lineStr = std::to_string(line);
+    size_t filenameLen = std::strlen(filename);
+
+    // Estimate size for reserve
+    size_t totalSize =
+        2 + timestamp.size() + 1 + color.size() +
+        2 + levelStr.size() + reset.size() +
+        3 + m_Name.size() +
+        2 + message.size() +
+        2 + filenameLen + 1 + lineStr.size() + 1;
+
+    std::string result;
+    result.reserve(totalSize);  // Prevent reallocations
 
     // Format: [timestamp] [level] [name]: message (file:line)
-    ink_u32 len = snprintf(buffer, sizeof(buffer),
-        "[%s] %s[%s]%s [%s]: %s (%s:%d)",
-        timestamp.c_str(),
-        color.c_str(),
-        levelStr.c_str(),
-        reset.c_str(),
-        m_Name.c_str(),
-        message.c_str(),
-        filename,
-        line);
+    result += '[' + timestamp + "] " +
+              color + '[' + levelStr + ']' + reset +
+              " [" + m_Name + "]: " +
+              message + " (" + filename + ':' + lineStr + ')';
 
-    if (len > 0 && len < sizeof(buffer))
+    size_t len = result.size();
+
+    if (len > 0)
     {
         // Output to console - use fwrite for better performance than cout
-        fwrite(buffer, 1, len, stdout);
+        fwrite(result.data(), 1, len, stdout);
         fwrite("\n", 1, 1, stdout);
         fflush(stdout);
 
         // Output to file if enabled
         if (m_LogToFile && m_FileStream.is_open())
         {
-            // Write to file without color codes
-            std::string fileMessage(buffer, len);
-            size_t pos = 0;
-            while ((pos = fileMessage.find("\033[")) != std::string::npos) {
-                size_t endPos = fileMessage.find('m', pos);
-                if (endPos != std::string::npos) {
-                    fileMessage.erase(pos, endPos - pos + 1);
-                } else {
-                    break;
-                }
-            }
-
-            m_FileStream << fileMessage << std::endl;
+            m_FileStream << '[' + timestamp + "] " +
+                            '[' + levelStr + ']' +
+                            " [" + m_Name + "]: " +
+                            message + " (" + filename + ':' + lineStr + ')' << std::endl;
         }
     }
 }

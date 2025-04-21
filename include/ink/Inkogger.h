@@ -62,7 +62,7 @@ struct LoggerColors {
 };
 
 static constexpr std::array<LevelMetadata, static_cast<size_t>(LogLevel::COUNT)> MAP_COLORS_FOR_LEVEL = {{
-    LevelMetadata("", "UNKNOWN"),
+    LevelMetadata("", "OFF"),
     LevelMetadata(LoggerColors::BOLD_RED, "FATAL"),
     LevelMetadata(LoggerColors::RED, "ERROR"),
     LevelMetadata(LoggerColors::YELLOW, "WARN"),
@@ -85,9 +85,11 @@ public:
     Inkogger(const std::string& name);
     ~Inkogger();
 
+    void setName(const std::string& name);
     void setLevel(LogLevel level);
     ink_bool isEnabled(LogLevel level) const;
     void log(LogLevel level, const std::string& message, const char* file, ink_u32 line);
+    void log(LogLevel level, const std::string& message);
     std::string getColorForLevel(LogLevel level) const;
     std::string getLevelString(LogLevel level) const;
     void setLogToFile(const std::string& filepath);
@@ -108,9 +110,14 @@ class INK_API LogStream {
 public:
     LogStream(std::shared_ptr<Inkogger> logger, LogLevel level, const char* file, ink_u32 line)
         : m_Logger(logger), m_Level(level), m_File(file), m_Line(line) {}
+    LogStream(std::shared_ptr<Inkogger> logger, LogLevel level)
+        : m_Logger(logger), m_Level(level) {}
 
     ~LogStream() {
-        m_Logger->log(m_Level, m_Stream.str(), m_File, m_Line);
+        if (m_Level != LogLevel::OFF)
+            m_Logger->log(m_Level, m_Stream.str(), m_File, m_Line);
+        else
+            m_Logger->log(m_Level, m_Stream.str());
     }
 
     template<typename T>
@@ -184,7 +191,7 @@ ink::LogStream(logger, ink::LogLevel::TRACE, __FILE__, __LINE__)
 }
 
 // Define a core logger for global access
-#define INK_CORE_LOGGER ink::LogManager::getInstance().getLogger("AURA")
+#define INK_CORE_LOGGER ink::LogManager::getInstance().getLogger("INK")
 
 // Convenience macros that use the core logger
 #ifdef INK_DISABLE_LOGGING
@@ -195,6 +202,7 @@ ink::LogStream(logger, ink::LogLevel::TRACE, __FILE__, __LINE__)
 #define INK_ERROR ((void)0)
 #define INK_FATAL ((void)0)
 #else
+#define INK_LOG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::OFF)
 #define INK_TRACE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::TRACE, __FILE__, __LINE__)
 #define INK_VERBOSE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
 #define INK_DEBUG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::DEBUG, __FILE__, __LINE__)
