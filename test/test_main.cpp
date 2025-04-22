@@ -20,6 +20,34 @@ int add(int a, int b) {
     return a + b;
 }
 
+class TestWorkerThread : public ink::WorkerThread
+{
+public:
+    TestWorkerThread(ink::Policy policy = ink::Policy::KillImediately, size_t timeoutSecs = 0) :
+        WorkerThread(policy, timeoutSecs),
+        _processCount(0)
+    {
+        setOnStartAction([this]() { INK_LOG << "TestWorkerThread started"; });
+        setOnDestructionAction([this]() { INK_LOG << "TestWorkerThread destroyed"; });
+    }
+
+    size_t getProcessCount() const { return _processCount; }
+
+    void resetProcessCount() { _processCount = 0; }
+
+protected:
+    virtual void process() override
+    {
+        _processCount++;
+
+        INK_LOG << "Process called: " << _processCount << " times";
+    }
+
+private:
+    std::atomic<size_t> _processCount;
+};
+
+
 int main(int argc, char** argv) {
     ink::ArgParser argParser("INK argParser TEST");
     argParser.add_argument("-w", "--workers", "workers", "Threads para trabalhar no processamento em paralelo", "10", false);
@@ -45,168 +73,176 @@ int main(int argc, char** argv) {
     INK_ERROR << "test";
     INK_FATAL << "test";
 
+    TestWorkerThread worker(ink::Policy::WaitProcessFinish, 1);
+
+    worker.start();
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    worker.stop();
+
     INK_ASSERT(1==1);
     INK_ASSERT_MSG(1==1, "TEST");
 
+    INK_LOG << ink::utils::exec_command("nvidia-smi");
+
     // Submit tasks to the thread pool
-    // runtime([&](){
-    //     for (int i = 0; i < max_workers; ++i)
-    //     {
-    //         futures.push_back(pool.submit(add, max_workers, i));
-    //     }
+    runtime([&](){
+        for (int i = 0; i < max_workers; ++i)
+        {
+            futures.push_back(pool.submit(add, max_workers, i));
+        }
 
-    //     for (auto& future : futures)
-    //     {
-    //         future.get();
-    //     }
-    // });
+        for (auto& future : futures)
+        {
+            future.get();
+        }
+    });
 
-    // runtime([&](){
-    //     // Create a new list
-    //     ink::InkedList<int>list;
+    runtime([&](){
+        // Create a new list
+        ink::InkedList<int>list;
 
-    //     // Test empty list properties
-    //     INK_DEBUG << "Empty list test:";
-    //     INK_DEBUG << "  Length: " << list.length();
-    //     INK_DEBUG << "  Head null? " << (list.head() == nullptr ? "Yes" : "No");
+        // Test empty list properties
+        INK_DEBUG << "Empty list test:";
+        INK_DEBUG << "  Length: " << list.length();
+        INK_DEBUG << "  Head null? " << (list.head() == nullptr ? "Yes" : "No");
 
-    //     // Test push_back
-    //     INK_DEBUG << "\nAdding elements with push_back:";
-    //     int val1 = 10, val2 = 20, val3 = 30;
+        // Test push_back
+        INK_DEBUG << "\nAdding elements with push_back:";
+        int val1 = 10, val2 = 20, val3 = 30;
 
-    //     list.push_back(val1);
-    //     list.push_back(val2);
-    //     list.push_back(val3);
+        list.push_back(val1);
+        list.push_back(val2);
+        list.push_back(val3);
 
-    //     INK_DEBUG << "  Length after adding 3 elements: " << list.length();
+        INK_DEBUG << "  Length after adding 3 elements: " << list.length();
 
-    //     // Test forward traversal
-    //     INK_DEBUG << "  List contents:";
-    //     auto* curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
+        // Test forward traversal
+        INK_DEBUG << "  List contents:";
+        auto* curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
 
-    //     // Test insert
-    //     INK_DEBUG << "\nInserting element at position 1:";
-    //     int val4 = 15;
-    //     list.insert(val4, 1);
+        // Test insert
+        INK_DEBUG << "\nInserting element at position 1:";
+        int val4 = 15;
+        list.insert(val4, 1);
 
-    //     INK_DEBUG << "  Length after insert: " << list.length();
-    //     INK_DEBUG << "  List contents:";
-    //     curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
+        INK_DEBUG << "  Length after insert: " << list.length();
+        INK_DEBUG << "  List contents:";
+        curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
 
-    //     // Test remove by index
-    //     INK_DEBUG << "\nRemoving element at index 2:";
-    //     if (list.remove(2))
-    //     {
-    //         INK_DEBUG << "  Length after remove: " << list.length();
-    //         INK_DEBUG << "  List contents:";
-    //         curr = list.head();
-    //         while (curr != nullptr) {
-    //             INK_DEBUG << "    Value: " << curr->data;
-    //             curr = curr->next;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         INK_FATAL << "FAil remove index";
-    //     }
+        // Test remove by index
+        INK_DEBUG << "\nRemoving element at index 2:";
+        if (list.remove(2))
+        {
+            INK_DEBUG << "  Length after remove: " << list.length();
+            INK_DEBUG << "  List contents:";
+            curr = list.head();
+            while (curr != nullptr) {
+                INK_DEBUG << "    Value: " << curr->data;
+                curr = curr->next;
+            }
+        }
+        else
+        {
+            INK_FATAL << "FAil remove index";
+        }
 
-    //     if (list.remove(val3))
-    //     {
-    //         // Test remove by value
-    //         INK_DEBUG << "\nRemoving element with value 30:";
+        if (list.remove(val3))
+        {
+            // Test remove by value
+            INK_DEBUG << "\nRemoving element with value 30:";
 
-    //         INK_DEBUG << "  Length after remove: " << list.length();
-    //         INK_DEBUG << "  List contents:";
-    //         curr = list.head();
-    //         while (curr != nullptr) {
-    //             INK_DEBUG << "    Value: " << curr->data;
-    //             curr = curr->next;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         INK_FATAL << "Fail remove element";
-    //     }
+            INK_DEBUG << "  Length after remove: " << list.length();
+            INK_DEBUG << "  List contents:";
+            curr = list.head();
+            while (curr != nullptr) {
+                INK_DEBUG << "    Value: " << curr->data;
+                curr = curr->next;
+            }
+        }
+        else
+        {
+            INK_FATAL << "Fail remove element";
+        }
 
-    //     // Test pop_front with data capture
-    //     INK_DEBUG << "\nPopping from front:";
-    //     int* popped_data = nullptr;
-    //     list.pop_front(popped_data);
+        // Test pop_front with data capture
+        INK_DEBUG << "\nPopping from front:";
+        int* popped_data = nullptr;
+        list.pop_front(popped_data);
 
-    //     INK_DEBUG << "  Popped value: " << popped_data;
-    //     INK_DEBUG << "  Length after pop_front: " << list.length();
-    //     INK_DEBUG << "  List contents:";
-    //     curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
+        INK_DEBUG << "  Popped value: " << popped_data;
+        INK_DEBUG << "  Length after pop_front: " << list.length();
+        INK_DEBUG << "  List contents:";
+        curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
 
-    //     // Test enqueue (add to front)
-    //     INK_DEBUG << "\nEnqueuing new element at front:";
-    //     int val5 = 5;
-    //     list.enqueue(val5);
+        // Test enqueue (add to front)
+        INK_DEBUG << "\nEnqueuing new element at front:";
+        int val5 = 5;
+        list.enqueue(val5);
 
-    //     INK_DEBUG << "  Length after enqueue: " << list.length();
-    //     INK_DEBUG << "  List contents:";
-    //     curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
+        INK_DEBUG << "  Length after enqueue: " << list.length();
+        INK_DEBUG << "  List contents:";
+        curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
 
-    //     // Test pop_back
-    //     INK_DEBUG << "\nPopping from back:";
-    //     list.pop_back(popped_data);
+        // Test pop_back
+        INK_DEBUG << "\nPopping from back:";
+        list.pop_back(popped_data);
 
-    //     INK_DEBUG << "  Popped value: " << popped_data;
-    //     INK_DEBUG << "  Length after pop_back: " << list.length();
-    //     INK_DEBUG << "  List contents:";
-    //     curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
+        INK_DEBUG << "  Popped value: " << popped_data;
+        INK_DEBUG << "  Length after pop_back: " << list.length();
+        INK_DEBUG << "  List contents:";
+        curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
 
-    //     // Test edge case: operations on empty list
-    //     INK_DEBUG << "\nTesting operations on empty list:";
+        // Test edge case: operations on empty list
+        INK_DEBUG << "\nTesting operations on empty list:";
 
-    //     // Clear the list first
-    //     while (list.length() > 0) {
-    //         list.pop_front(nullptr);
-    //     }
+        // Clear the list first
+        while (list.length() > 0) {
+            list.pop_front(nullptr);
+        }
 
-    //     INK_DEBUG << "  Length of empty list: " << list.length();
+        INK_DEBUG << "  Length of empty list: " << list.length();
 
-    //     // Try popping from empty list
-    //     list.pop_front(popped_data);
-    //     list.pop_back(popped_data);
+        // Try popping from empty list
+        list.pop_front(popped_data);
+        list.pop_back(popped_data);
 
-    //     INK_DEBUG << "  Length after popping from empty list: " << list.length();
+        INK_DEBUG << "  Length after popping from empty list: " << list.length();
 
-    //     // Add element to empty list
-    //     INK_DEBUG << "\nAdding to previously emptied list:";
-    //     int val6 = 42;
-    //     list.push_back(val6);
+        // Add element to empty list
+        INK_DEBUG << "\nAdding to previously emptied list:";
+        int val6 = 42;
+        list.push_back(val6);
 
-    //     INK_DEBUG << "  Length after adding to empty list: " << list.length();
-    //     INK_DEBUG << "  List contents:";
-    //     curr = list.head();
-    //     while (curr != nullptr) {
-    //         INK_DEBUG << "    Value: " << curr->data;
-    //         curr = curr->next;
-    //     }
-    // });
-
-    INK_DEBUG << "async";
+        INK_DEBUG << "  Length after adding to empty list: " << list.length();
+        INK_DEBUG << "  List contents:";
+        curr = list.head();
+        while (curr != nullptr) {
+            INK_DEBUG << "    Value: " << curr->data;
+            curr = curr->next;
+        }
+    });
 
     return 0;
 }

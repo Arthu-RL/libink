@@ -157,37 +157,6 @@ private:
     ink_bool m_GlobalUseColors = true;
 };
 
-// Helper macros for the logger
-#ifdef INK_DISABLE_LOGGING
-#define INK_LOG_TRACE(logger) ((void)0)
-#define INK_LOG_DEBUG(logger) ((void)0)
-#define INK_LOG_INFO(logger)  ((void)0)
-#define INK_LOG_WARN(logger)  ((void)0)
-#define INK_LOG_ERROR(logger) ((void)0)
-#define INK_LOG_FATAL(logger) ((void)0)
-#else
-#define INK_LOG_TRACE(logger) \
-ink::LogStream(logger, ink::LogLevel::TRACE, __FILE__, __LINE__)
-
-#define INK_LOG_VERBOSE(logger) \
-    ink::LogStream(logger, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
-
-#define INK_LOG_DEBUG(logger) \
-    ink::LogStream(logger, ink::LogLevel::DEBUG, __FILE__, __LINE__)
-
-#define INK_LOG_INFO(logger) \
-    ink::LogStream(logger, ink::LogLevel::INFO, __FILE__, __LINE__)
-
-#define INK_LOG_WARN(logger) \
-    ink::LogStream(logger, ink::LogLevel::WARN, __FILE__, __LINE__)
-
-#define INK_LOG_ERROR(logger) \
-    ink::LogStream(logger, ink::LogLevel::ERROR, __FILE__, __LINE__)
-
-#define INK_LOG_FATAL(logger) \
-    ink::LogStream(logger, ink::LogLevel::FATAL, __FILE__, __LINE__)
-#endif
-
 }
 
 // Define a core logger for global access

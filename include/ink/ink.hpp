@@ -27,6 +27,7 @@
 #include <ink/ThreadPool.h>
 #include <ink/String.h>
 #include <ink/utils.h>
+#include <ink/WorkerThread.h>
 
 
 /*====================
