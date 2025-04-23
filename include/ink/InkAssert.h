@@ -12,7 +12,8 @@
 #define INK_DISABLE_ASSERTS
 #endif
 
-inline void ReportAssertionFailure(const char* expression, const std::string& message, const char* file, int line) {
+inline void ReportAssertionFailure(const char* expression, const std::string& message, const char* file, int line)
+{
     // Extract filename from path
     const char* filename = file;
     const char* lastSlash = strrchr(file, '/');
@@ -26,20 +27,17 @@ inline void ReportAssertionFailure(const char* expression, const std::string& me
 
     const char* msg = message.c_str();
 
-    // Print to stderr with colors
-    fprintf(stderr, "%s%sASSERTION FAILED: %s%s\n",
-            ink::LoggerColors::BOLD, ink::LoggerColors::RED,
-            expression, ink::LoggerColors::RESET);
+    INK_LOG << ink::LoggerColors::BOLD << ink::LoggerColors::RED << "ASSERTION FAILED: "
+            << expression << ink::LoggerColors::RESET;
 
-    if (msg && msg[0] != '\0') {
-        fprintf(stderr, "%s%sMessage: %s%s\n",
-                ink::LoggerColors::BOLD, ink::LoggerColors::RED,
-                msg, ink::LoggerColors::RESET);
+    if (msg && msg[0] != '\0')
+    {
+        INK_LOG << ink::LoggerColors::BOLD << ink::LoggerColors::RED << "Message: "
+                << msg << ink::LoggerColors::RESET;
     }
 
-    fprintf(stderr, "%s%sLocation: %s:%d%s\n",
-            ink::LoggerColors::BOLD, ink::LoggerColors::RED,
-            filename, line, ink::LoggerColors::RESET);
+    INK_LOG << ink::LoggerColors::BOLD << ink::LoggerColors::RED << "Location: "
+            << filename << ':' << line << ink::LoggerColors::RESET;
 
 // Break into the debugger if available
 #if defined(_MSC_VER)
@@ -56,6 +54,10 @@ inline void ReportAssertionFailure(const char* expression, const std::string& me
 #endif
 }
 
+#ifdef INK_DISABLE_ASSERTS
+#define INK_ASSERT(condition) do { (void)sizeof(condition); } while(false)
+#define INK_ASSERT_MSG(condition, message) do { (void)sizeof(condition); } while(false)
+#else
 /**
  * Basic assertion that breaks if the condition is false
  */
@@ -67,13 +69,14 @@ do { \
 } while (false)
 
 /**
-     * Assertion with custom message
-     */
+ * Assertion with custom message
+ */
 #define INK_ASSERT_MSG(condition, message) \
     do { \
         if (!(condition)) { \
             ReportAssertionFailure(#condition, message, __FILE__, __LINE__); \
     } \
 } while (false)
+#endif
 
 #endif // INKASSERT_H
