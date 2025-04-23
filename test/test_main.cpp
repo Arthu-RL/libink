@@ -73,31 +73,31 @@ int main(int argc, char** argv) {
     INK_ERROR << "test";
     INK_FATAL << "test";
 
-    TestWorkerThread worker(ink::Policy::WaitProcessFinish, 1);
+    // TestWorkerThread worker(ink::Policy::WaitProcessFinish, 1);
 
-    worker.start();
+    // worker.start();
 
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    worker.stop();
+    // worker.stop();
 
-    INK_ASSERT(1==1);
-    INK_ASSERT_MSG(1==1, "TEST");
+    // INK_ASSERT(1==1);
+    // INK_ASSERT_MSG(1==1, "TEST");
 
-    INK_LOG << ink::utils::exec_command("nvidia-smi");
+    // INK_LOG << ink::utils::exec_command("nvidia-smi");
 
-    // Submit tasks to the thread pool
-    runtime([&](){
-        for (int i = 0; i < max_workers; ++i)
-        {
-            futures.push_back(pool.submit(add, max_workers, i));
-        }
+    // // Submit tasks to the thread pool
+    // runtime([&](){
+    //     for (int i = 0; i < max_workers; ++i)
+    //     {
+    //         futures.push_back(pool.submit(add, max_workers, i));
+    //     }
 
-        for (auto& future : futures)
-        {
-            future.get();
-        }
-    });
+    //     for (auto& future : futures)
+    //     {
+    //         future.get();
+    //     }
+    // });
 
     runtime([&](){
         // Create a new list
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 
         // Test remove by index
         INK_DEBUG << "\nRemoving element at index 2:";
-        if (list.remove(2))
+        if (list.remove_idx(2))
         {
             INK_DEBUG << "  Length after remove: " << list.length();
             INK_DEBUG << "  List contents:";
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
             INK_FATAL << "FAil remove index";
         }
 
-        if (list.remove(val3))
+        if (list.remove_data(val3))
         {
             // Test remove by value
             INK_DEBUG << "\nRemoving element with value 30:";

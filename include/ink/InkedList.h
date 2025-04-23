@@ -25,7 +25,14 @@ public:
         // Empty
     }
 
+
     InkedList(const T& data) : size(1)
+    {
+        root = new Node(data);
+        tail = root;
+    }
+
+    InkedList(T&& data) : size(1)
     {
         root = new Node(std::move(data));
         tail = root;
@@ -33,10 +40,22 @@ public:
 
     InkedList(const T& header_data, const T& data) : size(2)
     {
-        root = new Node(std::move(header_data));
-        root->next = new Node(std::move(data));
-        root->next->prev = root;
-        tail = root->next;
+        root = new Node(data);
+        Node* header = new Node(header_data);
+        root->prev = header;
+        header->next = root;
+
+        tail = root;
+    }
+
+    InkedList(T&& header_data, T&& data) : size(2)
+    {
+        root = new Node(std::move(data));
+        Node* header = new Node(std::move(header_data));
+        root->prev = header;
+        header->next = root;
+
+        tail = root;
     }
 
     ~InkedList()
@@ -49,18 +68,43 @@ public:
         }
     }
 
+    InkedList(InkedList&& inkedList) = delete;
+    InkedList(const InkedList& inkedList) = delete;
+    InkedList& operator=(const InkedList& inkedList) = delete;
+    InkedList& operator=(InkedList&& inkedList) = delete;
+
     // Methods
     Node* head() noexcept { return root; }
 
-    ink_u32 length() const noexcept { return size; }
+    size_t length() const noexcept { return size; }
 
     void push_back(const T& data)
     {
-        Node* newNode = new Node(std::move(data));
-        if (root == nullptr) {
+        Node* newNode = new Node(data);
+        if (root == nullptr)
+        {
             root = newNode;
             tail = newNode;
-        } else {
+        }
+        else
+        {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+        size++;
+    }
+
+    void push_back(T&& data)
+    {
+        Node* newNode = new Node(std::move(data));
+        if (root == nullptr)
+        {
+            root = newNode;
+            tail = newNode;
+        }
+        else
+        {
             tail->next = newNode;
             newNode->prev = tail;
             tail = newNode;
@@ -70,11 +114,31 @@ public:
 
     void enqueue(const T& data)
     {
-        Node* newNode = new Node(std::move(data));
-        if (root == nullptr) {
+        Node* newNode = new Node(data);
+        if (root == nullptr)
+        {
             root = newNode;
             tail = newNode;
-        } else {
+        }
+        else
+        {
+            newNode->next = root;
+            root->prev = newNode;
+            root = newNode;
+        }
+        size++;
+    }
+
+    void enqueue(T&& data)
+    {
+        Node* newNode = new Node(std::move(data));
+        if (root == nullptr)
+        {
+            root = newNode;
+            tail = newNode;
+        }
+        else
+        {
             newNode->next = root;
             root->prev = newNode;
             root = newNode;
@@ -84,19 +148,19 @@ public:
 
     bool pop_front(T* data = nullptr)
     {
-        if (root == nullptr) {
+        if (root == nullptr)
             return false;
-        }
-        if (data != nullptr) {
-            *data = root->data;
-        }
+
+        if (data != nullptr)
+            *data = std::move(root->data);
+
         Node* oldRoot = root;
         root = root->next;
-        if (root == nullptr) {
+        if (root == nullptr)
             tail = nullptr;
-        } else {
+        else
             root->prev = nullptr;
-        }
+
         delete oldRoot;
         size--;
         return true;
@@ -104,38 +168,69 @@ public:
 
     bool pop_back(T* data = nullptr)
     {
-        if (tail == nullptr) {
+        if (tail == nullptr)
             return false;
-        }
-        if (data != nullptr) {
-            *data = tail->data;
-        }
+
+        if (data != nullptr)
+            *data = std::move(tail->data);
+
         Node* oldTail = tail;
         tail = tail->prev;
-        if (tail == nullptr) {
+
+        if (tail == nullptr)
             root = nullptr;
-        } else {
+        else
             tail->next = nullptr;
-        }
+
         delete oldTail;
         size--;
         return true;
     }
 
-    void insert(const T& data, ink_u32 index)
+    void insert(const T& data, size_t index)
     {
-        if (index == 0 || root == nullptr) {
+        if (index == 0 || root == nullptr)
+        {
             enqueue(data);
             return;
         }
-        if (index >= size) {
+
+        if (index >= size)
+        {
             push_back(data);
             return;
         }
+
         Node* current = root;
-        for (ink_u32 i = 0; i < index; i++) {
+        for (size_t i = 0; i < index; i++)
             current = current->next;
+
+        Node* newNode = new Node(data);
+        newNode->prev = current->prev;
+        newNode->next = current;
+        current->prev->next = newNode;
+        current->prev = newNode;
+        size++;
+    }
+
+    void insert(T&& data, size_t index)
+    {
+        if (index == 0 || root == nullptr)
+        {
+            enqueue(data);
+            return;
         }
+
+        if (index >= size)
+        {
+            push_back(data);
+            return;
+        }
+
+        Node* current = root;
+        for (size_t i = 0; i < index; i++)
+            current = current->next;
+
         Node* newNode = new Node(std::move(data));
         newNode->prev = current->prev;
         newNode->next = current;
@@ -144,7 +239,7 @@ public:
         size++;
     }
 
-    bool remove(ink_u32 index)
+    bool remove_idx(size_t index)
     {
         if (index >= size)
             return false;
@@ -155,15 +250,9 @@ public:
         if (index == size - 1)
             return pop_back();
 
-        if (index < 0)
-            index = size - index;
-
         Node* current = root;
-        for (ink_u32 i = 0; i != index; i++)
-        {
+        for (size_t i = 0; i < index; i++)
             current = current->next;
-        }
-        current = current->next;
 
         current->prev->next = current->next;
         current->next->prev = current->prev;
@@ -172,7 +261,7 @@ public:
         return true;
     }
 
-    bool remove(const T& data)
+    bool remove_data(const T& data)
     {
         if (root == nullptr)
             return false;
@@ -184,8 +273,16 @@ public:
             return pop_back();
 
         Node* current = root->next;
-        while (current != nullptr && current != tail) {
-            if (current->data == data) {
+        while (current != nullptr && current != tail)
+        {
+            if (current->data == data)
+            {
+                if (current == root)
+                    return pop_front();
+
+                if (current == tail)
+                    return pop_back();
+
                 current->prev->next = current->next;
                 current->next->prev = current->prev;
                 delete current;
@@ -200,7 +297,7 @@ public:
 private:
     Node* root; // First element, that can have a header
     Node* tail; // Back
-    ink_u32 size;
+    size_t size;
 };
 
 } // namespace ink
