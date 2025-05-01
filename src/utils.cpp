@@ -12,7 +12,7 @@ std::string exec_command(const std::string& cmd)
     INK_ASSERT_MSG(pipe, "PIPE DIDN'T OPEN!");
 
     std::string result;
-    result.reserve(16384);
+    result.reserve(1024);
 
     char buffer[MAX_CHUNKS];
 

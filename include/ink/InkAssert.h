@@ -12,7 +12,7 @@
 #define INK_DISABLE_ASSERTS
 #endif
 
-inline void ReportAssertionFailure(const char* expression, const std::string& message, const char* file, int line)
+inline INK_API void ReportAssertionFailure(const char* expression, const std::string& message, const char* file, int line)
 {
     // Extract filename from path
     const char* filename = file;

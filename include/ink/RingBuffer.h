@@ -9,7 +9,7 @@
 
 namespace ink {
 
-class RingBuffer {
+class INK_API RingBuffer {
 public:
     explicit RingBuffer(size_t capacity = 8192);
 

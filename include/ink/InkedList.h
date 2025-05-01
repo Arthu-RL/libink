@@ -11,7 +11,7 @@
 namespace ink {
 
 template <typename T>
-class InkedList {
+class INK_API InkedList {
 public:
     struct Node {
         Node(const T& _data) : data(_data), prev(nullptr), next(nullptr) {}

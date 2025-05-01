@@ -23,13 +23,22 @@ public:
     ArgParser& operator=(ArgParser&&) = delete;
 
     static std::string argsToString(int argc, char** argv);
+
     void add_argument(const std::string& short_id,
                       const std::string& long_id,
                       const std::string& desc,
                       const std::string& help,
                       const std::string& default_value,
                       const bool required);
+
+    void add_argument(const std::string& long_id,
+                      const std::string& desc,
+                      const std::string& help,
+                      const std::string& default_value,
+                      const bool required);
+
     ink::EnhancedJson parse_args(const std::string& args);
+
     void show_help();
 
 private:

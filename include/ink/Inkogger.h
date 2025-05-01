@@ -10,6 +10,7 @@
 #include <array>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
 
 #include "ink/ink_base.hpp"
 
@@ -72,7 +73,8 @@ static constexpr std::array<LevelMetadata, static_cast<size_t>(LogLevel::COUNT)>
     LevelMetadata(LoggerColors::CYAN, "TRACE")
 }};
 
-class INK_API Inkogger {
+// Abstract base interface for all loggers
+class INK_API IInkogger {
 public:
     struct LogMessage {
         LogLevel level;
@@ -82,52 +84,71 @@ public:
         ink_u32 line;
     };
 
-    Inkogger(const std::string& name);
-    ~Inkogger();
+    virtual ~IInkogger() = default;
 
-    void setName(const std::string& name);
-    void setLevel(LogLevel level);
-    ink_bool isEnabled(LogLevel level) const;
-    void log(LogLevel level, const std::string& message, const char* file, ink_u32 line);
-    void log(LogLevel level, const std::string& message);
+    virtual void setName(const std::string& name) = 0;
+    virtual std::string getName() const = 0;
+    virtual void setLevel(LogLevel level) = 0;
+    virtual LogLevel getLevel() const = 0;
+    virtual ink_bool isEnabled(LogLevel level) const = 0;
+    virtual void log(LogLevel level, const std::string& message, const char* file = nullptr, ink_u32 line = 0) = 0;
+    virtual void setLogToFile(const std::string& filepath) = 0;
+    virtual void setUseColors(ink_bool useColors) = 0;
+};
+
+class INK_API Inkogger : public IInkogger {
+public:
+    Inkogger(const std::string& name);
+    virtual ~Inkogger();
+
+    void setName(const std::string& name) override;
+    std::string getName() const override { return m_Name; }
+    void setLevel(LogLevel level) override;
+    LogLevel getLevel() const override { return m_Level; }
+    ink_bool isEnabled(LogLevel level) const override;
+    void log(LogLevel level, const std::string& message, const char* file = nullptr, ink_u32 line = 0) override;
     std::string getColorForLevel(LogLevel level) const;
     std::string getLevelString(LogLevel level) const;
-    void setLogToFile(const std::string& filepath);
-    void setUseColors(bool useColors);
+    void setLogToFile(const std::string& filepath) override;
+    void setUseColors(ink_bool useColors) override;
 
-private:
+protected:
+    std::string getCurrentTimestamp() const;
+    std::string extractFilename(const char* path) const;
+
     std::string m_Name;
-    LogLevel m_Level;
-    ink_bool m_UseColors;
+    std::atomic<LogLevel> m_Level;
+    std::atomic<bool> m_UseColors;
     std::mutex m_Mutex;
     std::ofstream m_FileStream;
-    ink_bool m_LogToFile;
-    std::string getCurrentTimestamp() const;
+    std::atomic<bool> m_LogToFile;
+
+    // Thread-local buffer for message formatting
+    static thread_local std::string t_MessageBuffer;
 };
 
 // Stream-style logging class
 class INK_API LogStream {
 public:
-    LogStream(std::shared_ptr<Inkogger> logger, LogLevel level, const char* file, ink_u32 line)
+    LogStream(std::shared_ptr<IInkogger> logger, LogLevel level, const char* file = nullptr, ink_u32 line = 0)
         : m_Logger(logger), m_Level(level), m_File(file), m_Line(line) {}
-    LogStream(std::shared_ptr<Inkogger> logger, LogLevel level)
-        : m_Logger(logger), m_Level(level) {}
 
     ~LogStream() {
-        if (m_Level != LogLevel::OFF)
+        if (m_Logger) {
             m_Logger->log(m_Level, m_Stream.str(), m_File, m_Line);
-        else
-            m_Logger->log(m_Level, m_Stream.str());
+        }
     }
 
     template<typename T>
     LogStream& operator<<(const T& value) {
-        m_Stream << value;
+        if (m_Logger && m_Logger->isEnabled(m_Level)) {
+            m_Stream << value;
+        }
         return *this;
     }
 
 private:
-    std::shared_ptr<Inkogger> m_Logger;
+    std::shared_ptr<IInkogger> m_Logger;
     LogLevel m_Level;
     std::stringstream m_Stream;
     const char* m_File;
@@ -142,19 +163,29 @@ public:
         return instance;
     }
 
-    std::shared_ptr<Inkogger> getLogger(const std::string& name);
+    std::shared_ptr<IInkogger> getLogger(const std::string& name);
+    std::shared_ptr<IInkogger> registerLogger(const std::string& name, std::shared_ptr<IInkogger> logger);
     void setGlobalLevel(LogLevel level);
     void setLogToFile(const std::string& filepath);
     void setUseColors(ink_bool useColors);
 
+#ifdef INK_WITH_TENSORRT
+    std::shared_ptr<TensorRTLogger> getTensorRTLogger(const std::string& name);
+    nvinfer1::ILogger& getDefaultTensorRTLogger();
+#endif
+
 private:
-    LogManager() = default;
+    LogManager();
     ~LogManager() = default;
     std::mutex m_Mutex;
-    std::unordered_map<std::string, std::shared_ptr<Inkogger>> m_Loggers;
+    std::unordered_map<std::string, std::shared_ptr<IInkogger>> m_Loggers;
     LogLevel m_GlobalLevel = LogLevel::INFO;
     std::string m_GlobalFilePath;
     ink_bool m_GlobalUseColors = true;
+
+#ifdef INK_WITH_TENSORRT
+    std::shared_ptr<TensorRTLogger> m_DefaultTRTLogger;
+#endif
 };
 
 }
@@ -165,21 +196,31 @@ private:
 // Convenience macros that use the core logger
 #ifdef INK_DISABLE_LOGGING
 #define INK_TRACE ((void)0)
+#define INK_VERBOSE ((void)0)
 #define INK_DEBUG ((void)0)
 #define INK_INFO  ((void)0)
 #define INK_WARN  ((void)0)
 #define INK_ERROR ((void)0)
 #define INK_FATAL ((void)0)
+#define INK_LOG ((void)0)
 #else
 #define INK_LOG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::OFF)
 #define INK_TRACE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::TRACE, __FILE__, __LINE__)
 #define INK_VERBOSE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
 #define INK_DEBUG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::DEBUG, __FILE__, __LINE__)
-#define INK_INFO  ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::INFO, __FILE__, __LINE__)
-#define INK_WARN  ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::WARN, __FILE__, __LINE__)
+#define INK_INFO ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::INFO, __FILE__, __LINE__)
+#define INK_WARN ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::WARN, __FILE__, __LINE__)
 #define INK_ERROR ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::ERROR, __FILE__, __LINE__)
 #define INK_FATAL ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::FATAL, __FILE__, __LINE__)
+
+#define INKL_TRACE(logger) ink::LogStream(logger, ink::LogLevel::TRACE, __FILE__, __LINE__)
+#define INKL_VERBOSE(logger) ink::LogStream(logger, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
+#define INKL_DEBUG(logger) ink::LogStream(logger, ink::LogLevel::DEBUG, __FILE__, __LINE__)
+#define INKL_INFO(logger) ink::LogStream(logger, ink::LogLevel::INFO, __FILE__, __LINE__)
+#define INKL_WARN(logger) ink::LogStream(logger, ink::LogLevel::WARN, __FILE__, __LINE__)
+#define INKL_ERROR(logger) ink::LogStream(logger, ink::LogLevel::ERROR, __FILE__, __LINE__)
+#define INKL_FATAL(logger) ink::LogStream(logger, ink::LogLevel::FATAL, __FILE__, __LINE__)
+
 #endif
 
 #endif // INKOGGER_H
-

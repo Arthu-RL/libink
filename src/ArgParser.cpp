@@ -2,7 +2,6 @@
 
 #include "../include/ink/Inkogger.h"
 #include "../include/ink/InkException.h"
-#include "../include/ink/InkAssert.h"
 
 namespace ink {
 
@@ -29,8 +28,20 @@ void ArgParser::add_argument(const std::string& short_id,
                              const std::string& default_value,
                              const bool required)
 {
-    INK_ASSERT_MSG(_added_args.find(desc) == _added_args.end(), "Cannot add same argument "+desc+".");
+    INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
+    INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
     _added_args[desc] = {short_id, long_id, desc, help, default_value, required ? "1" : "0"};
+}
+
+void ArgParser::add_argument(const std::string& long_id,
+                             const std::string& desc,
+                             const std::string& help,
+                             const std::string& default_value,
+                             const bool required)
+{
+    INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
+    INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
+    _added_args[desc] = {"", long_id, desc, help, default_value, required ? "1" : "0"};
 }
 
 std::string ArgParser::extract_value(const std::string& args, size_t pos)
@@ -90,7 +101,7 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
         bool required = static_cast<bool>(std::stoi(arg[col++]));
 
         size_t long_id_find = args.find(long_id);
-        size_t short_id_find = args.find(short_id);
+        size_t short_id_find = short_id.empty() ? std::string::npos : args.find(short_id);
 
         std::string arg_value = "";
 
