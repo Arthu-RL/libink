@@ -340,7 +340,7 @@ throw ink::INKException((message), __FILE__, __LINE__, __FUNCTION__)
  * @param message The error message
  */
 #define INK_THROW_IF(condition, message) \
-    if (INK_UNLIKELY(!(condition))) { INK_THROW(message); }
+    if (INK_UNLIKELY(condition)) { INK_THROW(message); }
 
 /**
  * @brief Throw a specific exception type if condition is not met
@@ -349,7 +349,7 @@ throw ink::INKException((message), __FILE__, __LINE__, __FUNCTION__)
  * @param ... Arguments to pass to the exception constructor
  */
 #define INK_THROW_IF_EX(condition, ExClass, ...) \
-if (INK_UNLIKELY(!(condition))) { INK_THROW_EX(ExClass, __VA_ARGS__); }
+if (INK_UNLIKELY(condition)) { INK_THROW_EX(ExClass, __VA_ARGS__); }
 
 /**
  * @brief Create a nested exception wrapping the current exception
