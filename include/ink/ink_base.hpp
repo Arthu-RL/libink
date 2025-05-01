@@ -11,13 +11,29 @@
 #pragma once
 
 /*====================
+ * Good Macros
+ *====================*/
+// Double stringification
+#define INK_STR_HELPER(x) #x
+#define INK_STR(x) INK_STR_HELPER(x)
+
+// Token pasting (concatenation)
+#define CONCAT(a, b) a##b
+#define CONCAT_EXPAND(a, b) CONCAT(a, b)
+
+#define LOCATION __FILE__ ":" INK_STR(__LINE__)
+
+// Compile-time assertions
+#define STATIC_ASSERT(cond, msg) typedef char static_assertion_##msg[(cond) ? 1 : -1]
+
+/*====================
  * VERSION INFO
  *====================*/
-#define INK_MAJOR_VERSION 0
+#define INK_MAJOR_VERSION 1
 #define INK_MINOR_VERSION 1
 #define INK_PATCH_VERSION 0
 #define INK_VERSION ((INK_MAJOR_VERSION * 10000) + (INK_MINOR_VERSION * 100) + INK_PATCH_VERSION)
-#define INK_VERSION_STRING "0.1.0"
+#define INK_VERSION_STRING_FULL INK_STR(INK_MAJOR_VERSION) "." INK_STR(INK_MINOR_VERSION) "." INK_STR(INK_PATCH_VERSION)
 
 /*====================
  * C++ VERSION CHECK
