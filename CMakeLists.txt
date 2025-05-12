@@ -8,6 +8,7 @@ project(ink
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 
 # Build options
 option(INK_BUILD_TESTS "Build tests" ON)
