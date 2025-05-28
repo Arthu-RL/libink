@@ -34,7 +34,7 @@
  * INK DEFS
  *====================*/
 #define INK_CHECK_RESULT(result_code, msg)     \
-if (result_code != static_cast<ink_i32>(ink_result_t::SUCCESS)) \
+if (result_code != static_cast<i32>(ink_result_t::SUCCESS)) \
     throw ink::InkException(result, msg)  \
 
 #endif

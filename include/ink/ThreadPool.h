@@ -17,7 +17,7 @@ namespace ink {
 
 class INK_API ThreadPool {
 public:
-    ThreadPool(ink_size max_workers);
+    ThreadPool(size_t max_workers);
     ~ThreadPool();
 
     template <typename Function, typename... Args>
@@ -51,7 +51,7 @@ private:
 
     std::mutex _tpMutex;
     std::condition_variable _condition;
-    ink_bool _stop;
+    bool _stop;
 };
 
 }

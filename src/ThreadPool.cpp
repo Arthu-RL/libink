@@ -2,10 +2,10 @@
 
 namespace ink {
 
-ThreadPool::ThreadPool(ink_size max_workers) :
+ThreadPool::ThreadPool(size_t max_workers) :
     _stop(false)
 {
-    for (ink_size i = 0; i < max_workers; ++i)
+    for (size_t i = 0; i < max_workers; ++i)
     {
         _workers.emplace_back([this] {
             while (true)

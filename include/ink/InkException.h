@@ -40,7 +40,7 @@ public:
     explicit INKException(
         const std::string& message,
         const char* file = __FILE__,
-        ink_u32 line = __LINE__,
+        u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) :
         m_message(message),
@@ -62,10 +62,10 @@ public:
      * @param function Source function name
      */
     explicit INKException(
-        ink_i32 result_code,
+        i32 result_code,
         const std::string& message,
         const char* file = __FILE__,
-        ink_u32 line = __LINE__,
+        u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) :
         m_result_code(result_code),
@@ -118,7 +118,7 @@ public:
      * @brief Get the result code
      * @return The result code
      */
-    ink_i32 result_code() const noexcept {
+    i32 result_code() const noexcept {
         return m_result_code;
     }
 
@@ -199,7 +199,7 @@ public:
      * @param key The context key
      * @return True if the key exists
      */
-    ink_bool hasContext(const std::string& key) const {
+    bool hasContext(const std::string& key) const {
         return m_context.find(key) != m_context.end();
     }
 
@@ -210,7 +210,7 @@ public:
      * @param includeStackTrace Whether to include the stack trace
      * @return Formatted string representation of the exception
      */
-    virtual std::string toString(ink_bool includeStackTrace = true) const {
+    virtual std::string toString(bool includeStackTrace = true) const {
         return m_fullMessage + (includeStackTrace ? formatStackTrace() : "");
     }
 
@@ -225,7 +225,7 @@ public:
         const std::string& message,
         const std::exception& innerException,
         const char* file = __FILE__,
-        ink_u32 line = __LINE__,
+        u32 line = __LINE__,
         const char* function = __FUNCTION__
         ) {
         INKException ex(message, file, line, function);
@@ -249,7 +249,7 @@ protected:
         oss << "\n";
 
         // Add result code if available
-        if (m_result_code != static_cast<ink_i32>(ink_result_t::SUCCESS)) {
+        if (m_result_code != static_cast<i32>(ink_result_t::SUCCESS)) {
             oss << "  Result Code: " << static_cast<int>(m_result_code) << "\n";
         }
 
@@ -305,11 +305,11 @@ protected:
 
 protected:
     // Protected data members accessible to derived classes
-    ink_i32 m_result_code = static_cast<ink_i32>(ink_result_t::SUCCESS);
+    i32 m_result_code = static_cast<i32>(ink_result_t::SUCCESS);
     std::string m_message;
     std::string m_file;
     std::string m_function;
-    ink_u32 m_line;
+    u32 m_line;
     // No column number in C++17 and below
     std::chrono::system_clock::time_point m_timestamp;
     std::vector<std::string> m_stackTrace;

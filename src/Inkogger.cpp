@@ -36,7 +36,7 @@ void Inkogger::setLevel(LogLevel level)
     m_Level.store(level, std::memory_order_relaxed);
 }
 
-ink_bool Inkogger::isEnabled(LogLevel level) const
+bool Inkogger::isEnabled(LogLevel level) const
 {
     return level <= m_Level.load(std::memory_order_relaxed);
 }
@@ -100,7 +100,7 @@ std::string Inkogger::extractFilename(const char* path) const
     return filename;
 }
 
-void Inkogger::log(LogLevel level, const std::string& message, const char* file, ink_u32 line)
+void Inkogger::log(LogLevel level, const std::string& message, const char* file, u32 line)
 {
     // Special case for direct logging (OFF level)
     if (level == LogLevel::OFF && !message.empty())
@@ -227,7 +227,7 @@ void Inkogger::setLogToFile(const std::string& filepath)
     }
 }
 
-void Inkogger::setUseColors(ink_bool useColors)
+void Inkogger::setUseColors(bool useColors)
 {
     m_UseColors.store(useColors, std::memory_order_relaxed);
 }
@@ -282,7 +282,7 @@ void LogManager::setLogToFile(const std::string& filepath)
     }
 }
 
-void LogManager::setUseColors(ink_bool useColors)
+void LogManager::setUseColors(bool useColors)
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
 

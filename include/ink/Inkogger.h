@@ -81,7 +81,7 @@ public:
         std::string message;
         std::string timestamp;
         std::string file;
-        ink_u32 line;
+        u32 line;
     };
 
     virtual ~IInkogger() = default;
@@ -90,10 +90,10 @@ public:
     virtual std::string getName() const = 0;
     virtual void setLevel(LogLevel level) = 0;
     virtual LogLevel getLevel() const = 0;
-    virtual ink_bool isEnabled(LogLevel level) const = 0;
-    virtual void log(LogLevel level, const std::string& message, const char* file = nullptr, ink_u32 line = 0) = 0;
+    virtual bool isEnabled(LogLevel level) const = 0;
+    virtual void log(LogLevel level, const std::string& message, const char* file = nullptr, u32 line = 0) = 0;
     virtual void setLogToFile(const std::string& filepath) = 0;
-    virtual void setUseColors(ink_bool useColors) = 0;
+    virtual void setUseColors(bool useColors) = 0;
 };
 
 class INK_API Inkogger : public IInkogger {
@@ -105,12 +105,12 @@ public:
     std::string getName() const override { return m_Name; }
     void setLevel(LogLevel level) override;
     LogLevel getLevel() const override { return m_Level; }
-    ink_bool isEnabled(LogLevel level) const override;
-    void log(LogLevel level, const std::string& message, const char* file = nullptr, ink_u32 line = 0) override;
+    bool isEnabled(LogLevel level) const override;
+    void log(LogLevel level, const std::string& message, const char* file = nullptr, u32 line = 0) override;
     std::string getColorForLevel(LogLevel level) const;
     std::string getLevelString(LogLevel level) const;
     void setLogToFile(const std::string& filepath) override;
-    void setUseColors(ink_bool useColors) override;
+    void setUseColors(bool useColors) override;
 
 protected:
     std::string getCurrentTimestamp() const;
@@ -130,7 +130,7 @@ protected:
 // Stream-style logging class
 class INK_API LogStream {
 public:
-    LogStream(std::shared_ptr<IInkogger> logger, LogLevel level, const char* file = nullptr, ink_u32 line = 0)
+    LogStream(std::shared_ptr<IInkogger> logger, LogLevel level, const char* file = nullptr, u32 line = 0)
         : m_Logger(logger), m_Level(level), m_File(file), m_Line(line) {}
 
     ~LogStream() {
@@ -152,7 +152,7 @@ private:
     LogLevel m_Level;
     std::stringstream m_Stream;
     const char* m_File;
-    ink_u32 m_Line;
+    u32 m_Line;
 };
 
 // Global logger manager
@@ -167,12 +167,7 @@ public:
     std::shared_ptr<IInkogger> registerLogger(const std::string& name, std::shared_ptr<IInkogger> logger);
     void setGlobalLevel(LogLevel level);
     void setLogToFile(const std::string& filepath);
-    void setUseColors(ink_bool useColors);
-
-#ifdef INK_WITH_TENSORRT
-    std::shared_ptr<TensorRTLogger> getTensorRTLogger(const std::string& name);
-    nvinfer1::ILogger& getDefaultTensorRTLogger();
-#endif
+    void setUseColors(bool useColors);
 
 private:
     LogManager();
@@ -181,11 +176,7 @@ private:
     std::unordered_map<std::string, std::shared_ptr<IInkogger>> m_Loggers;
     LogLevel m_GlobalLevel = LogLevel::INFO;
     std::string m_GlobalFilePath;
-    ink_bool m_GlobalUseColors = true;
-
-#ifdef INK_WITH_TENSORRT
-    std::shared_ptr<TensorRTLogger> m_DefaultTRTLogger;
-#endif
+    bool m_GlobalUseColors = true;
 };
 
 }

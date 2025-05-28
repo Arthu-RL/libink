@@ -135,7 +135,6 @@
  * TYPE DEFINITIONS
  *====================*/
 #include <cstdint>
-#include <cstddef>
 #include <cstring>
 
 /* Return codes */
@@ -149,25 +148,20 @@ enum class ink_result_t {
     ERROR_IO = -6
 };
 
-using ink_i8 = int8_t;
-using ink_i16 = int16_t;
-using ink_i32 = int32_t;
-using ink_i64 = int64_t;
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
 
-using ink_u8 = uint8_t;
-using ink_u16 = uint16_t;
-using ink_u32 = uint32_t;
-using ink_u64 = uint64_t;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
 
-using ink_f32 = float;
-using ink_f64 = double;
+using f32 = float;
+using f64 = double;
 
-using ink_bool = bool;
-
-using ink_size = size_t;
-using ink_ptrdiff = ptrdiff_t;
-
-using ink_handle = void*;
+using ink_h = void*;
 
 /*====================
  * UTILITY MACROS

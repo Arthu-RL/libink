@@ -19,25 +19,25 @@ public:
 
     // File operations
     static EnhancedJson loadFromFile(const std::string& filePath);
-    static ink_bool saveToFile(const EnhancedJson& json, const std::string& filePath, ink_bool pretty = true, ink_i8 indent = 4);
+    static bool saveToFile(const EnhancedJson& json, const std::string& filePath, bool pretty = true, i8 indent = 4);
     static EnhancedJson loadFromString(const std::string& jsonStr);
 
     // Serialization
-    static std::string toString(const EnhancedJson& json, ink_bool pretty = false, ink_i8 indent = 4);
+    static std::string toString(const EnhancedJson& json, bool pretty = false, i8 indent = 4);
     static std::vector<uint8_t> toBinary(const EnhancedJson& json, const std::string& format = "cbor");
     static EnhancedJson fromBinary(const std::vector<uint8_t>& data, const std::string& format = "cbor");
 
     // Type checking utilities
-    static ink_bool isArray(const EnhancedJson& json);
-    static ink_bool isObject(const EnhancedJson& json);
-    static ink_bool isNull(const EnhancedJson& json);
-    static ink_bool isNumber(const EnhancedJson& json);
-    static ink_bool isString(const EnhancedJson& json);
-    static ink_bool isBoolean(const EnhancedJson& json);
+    static bool isArray(const EnhancedJson& json);
+    static bool isObject(const EnhancedJson& json);
+    static bool isNull(const EnhancedJson& json);
+    static bool isNumber(const EnhancedJson& json);
+    static bool isString(const EnhancedJson& json);
+    static bool isBoolean(const EnhancedJson& json);
 
     // Array utilities
-    static ink_size size(const EnhancedJson& json);
-    static ink_bool hasKey(const EnhancedJson& json, const std::string& key);
+    static size_t size(const EnhancedJson& json);
+    static bool hasKey(const EnhancedJson& json, const std::string& key);
     static std::vector<std::string> getKeys(const EnhancedJson& json);
 
     // Merge and patch utilities
@@ -46,11 +46,11 @@ public:
     static EnhancedJson patch(const EnhancedJson& source, const EnhancedJson& patch);
 
     // Schema validation
-    static ink_bool validate(const EnhancedJson& json, const EnhancedJson& schema);
+    static bool validate(const EnhancedJson& json, const EnhancedJson& schema);
 
     // Debug utilities
     static std::string getTypeName(const EnhancedJson& json);
-    // static ink_bool compareJson(const EnhancedJson& a, const EnhancedJson& b, ink_bool ignoreOrder = false); TODO
+    // static bool compareJson(const EnhancedJson& a, const EnhancedJson& b, bool ignoreOrder = false); TODO
 };
 
 
