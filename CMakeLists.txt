@@ -8,10 +8,10 @@ project(ink
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 
 # Build options
 option(INK_BUILD_TESTS "Build tests" ON)
+option(INK_AUTO_INSTALL "Auto install lib" ON)
 
 # Define include directories
 include_directories(include)
@@ -70,6 +70,16 @@ if(INK_BUILD_TESTS)
     add_test(NAME ${PROJECT_NAME}_tests COMMAND ${PROJECT_NAME}_tests)
 endif()
 
+# Compiler flags
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(${PROJECT_NAME} PRIVATE -g -O0)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE -O3 -DNDEBUG)
+endif()
+
 # Installation
 include(GNUInstallDirs)
 
@@ -108,7 +118,7 @@ else()
 endif()
 
 # If we have admin rights, install as post-build step
-if(IS_ADMIN)
+if(INK_AUTO_INSTALL)
     message(STATUS "Auto-install enabled: Library will be installed after each build")
     add_custom_command(
         TARGET ${PROJECT_NAME}
@@ -117,10 +127,6 @@ if(IS_ADMIN)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Auto-installing ${PROJECT_NAME} library..."
     )
-else()
-    message(WARNING "Auto-install enabled but not running with admin/root privileges.
-                    Library will not be installed automatically. Start QtCreator with
-                    admin/root privileges to enable auto-install.")
 endif()
 
 # Print summary information

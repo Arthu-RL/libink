@@ -10,6 +10,7 @@
 
 #pragma once
 
+
 /*====================
  * INCLUDE MODULES
  *====================*/
@@ -28,6 +29,16 @@
 #include <ink/String.h>
 #include <ink/utils.h>
 #include <ink/WorkerThread.h>
+
+
+/*====================
+ * VERSION INFO
+ *====================*/
+#define INK_MAJOR_VERSION 1
+#define INK_MINOR_VERSION 1
+#define INK_PATCH_VERSION 0
+#define INK_VERSION ((INK_MAJOR_VERSION * 10000) + (INK_MINOR_VERSION * 100) + INK_PATCH_VERSION)
+#define INK_VERSION_STRING_FULL INK_STR(INK_MAJOR_VERSION) "." INK_STR(INK_MINOR_VERSION) "." INK_STR(INK_PATCH_VERSION)
 
 
 /*====================
