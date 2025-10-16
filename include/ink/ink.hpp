@@ -20,6 +20,8 @@
 #include <ink/Inkogger.h>
 #include <ink/InkAssert.h>
 #include <ink/InkException.h>
+#include <ink/InkType.h>
+#include <ink/InkOtp.h>
 #include <ink/LastWish.h>
 #include <ink/ArgParser.h>
 #include <ink/InkedList.h>

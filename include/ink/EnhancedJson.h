@@ -8,8 +8,10 @@
 #include <vector>
 #include <functional>
 #include <fstream>
+#include <variant>
 
 #include "ink/ink_base.hpp"
+#include "InkType.h"
 
 namespace ink {
 
@@ -37,6 +39,21 @@ public:
 
     // Copy constructor from nlohmann::json
     EnhancedJson(const nlohmann::json& other) : nlohmann::json(other) {}
+
+    // Doesn't work, nlohmann::json only accepts strings, and converts the type when you use T get<T> function
+    EnhancedJson(const InkType& inkType) {
+        auto variant = inkType.toVariant();
+
+        std::visit([this](auto&& value) {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (!std::is_same_v<T, void*> && !std::is_same_v<T, std::monostate>) {
+                *this = nlohmann::json(value);
+            }
+            else {
+                *this = nlohmann::json();
+            }
+        }, variant);
+    }
 
     // Move constructor from nlohmann::json
     EnhancedJson(nlohmann::json&& other) noexcept : nlohmann::json(std::move(other)) {}

@@ -30,7 +30,7 @@ void ArgParser::add_argument(const std::string& short_id,
 {
     INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
     INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
-    _added_args[desc] = {short_id, long_id, desc, help, default_value, required ? "1" : "0"};
+    _added_args[desc] = {short_id, long_id, help, default_value, required};
 }
 
 void ArgParser::add_argument(const std::string& long_id,
@@ -41,7 +41,7 @@ void ArgParser::add_argument(const std::string& long_id,
 {
     INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
     INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
-    _added_args[desc] = {"", long_id, desc, help, default_value, required ? "1" : "0"};
+    _added_args[desc] = {"", long_id, help, default_value, required};
 }
 
 std::string ArgParser::extract_value(const std::string& args, size_t pos)
@@ -91,14 +91,13 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
     // process all arguments and collect missing required ones
     for (auto it = _added_args.begin(); it != _added_args.end(); ++it)
     {
-        const auto& arg = it->second;
-        int col = 0;
-        std::string short_id = arg[col++];
-        std::string long_id = arg[col++];
-        std::string desc = arg[col++];
-        std::string help = arg[col++];
-        std::string default_value = arg[col++];
-        bool required = static_cast<bool>(std::stoi(arg[col++]));
+        const std::string& desc = it->first;
+        auto& arg = it->second;
+        std::string& short_id = arg.short_id;
+        std::string& long_id = arg.long_id;
+        // std::string& help = arg.help;
+        std::string& default_value = arg.default_value;
+        bool required = arg.required;
 
         size_t long_id_find = args.find(long_id);
         size_t short_id_find = short_id.empty() ? std::string::npos : args.find(short_id);
@@ -118,8 +117,10 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
 
         if (!arg_value.empty())
             parsed_args[desc] = ink::EnhancedJson(arg_value);
-        else if (!required && !default_value.empty())
+        else if (!arg.required)
+        {
             parsed_args[desc] = ink::EnhancedJson(default_value);
+        }
         else if (required)
             lacking.push_back(long_id);
     }
@@ -146,26 +147,19 @@ void ArgParser::show_help()
 {
     INK_LOG << _description;
     INK_LOG << "Available arguments:";
-
-    for (auto it = _added_args.begin(); it != _added_args.end(); ++it)
+    for (const auto& [desc, arg] : _added_args)
     {
-        const auto& arg = it->second;
-        int col = 0;
-        std::string short_id = arg[col++];
-        std::string long_id = arg[col++];
-        std::string desc = arg[col++];
-        std::string help = arg[col++];
-        std::string default_value = arg[col++];
-        bool required = static_cast<bool>(std::stoi(arg[col++]));
+        std::string arg_line = "  ";
+        if (!arg.short_id.empty())
+            arg_line += arg.short_id + ", ";
+        arg_line += arg.long_id;
 
-        std::string arg_line = "  " + short_id + ", " + long_id;
-        std::string status = required ? "Required" : "Optional";
-
-        if (!default_value.empty() && !required)
-            status += " (Default: " + default_value + ")";
+        std::string status = arg.required ? "Required" : "Optional";
+        if (!arg.default_value.empty() && !arg.required)
+            status += " (Default: " + arg.default_value + ")";
 
         INK_LOG << arg_line;
-        INK_LOG << "    " << status << " " << help;
+        INK_LOG << "    " << status << " " << arg.help;
     }
 }
 
