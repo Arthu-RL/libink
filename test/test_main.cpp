@@ -16,7 +16,11 @@ void runtime(std::function<void()>&& f) {
 }
 
 int add(int a, int b) {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    for (;;)
+    {
+
+    }
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
     return a + b;
 }
 
@@ -50,7 +54,7 @@ private:
 
 int main(int argc, char** argv) {
     ink::ArgParser argParser("INK argParser TEST");
-    argParser.add_argument("-w", "--workers", "workers", "Threads para trabalhar no processamento em paralelo", "10", false);
+    argParser.add_argument("-w", "--workers", "workers", "Threads para trabalhar no processamento em paralelo", "22", false);
     argParser.add_argument("-t", "--test", "test", "test", "test", false);
     ink::EnhancedJson args = argParser.parse_args(ink::ArgParser::argsToString(argc, argv));
     argParser.show_help();

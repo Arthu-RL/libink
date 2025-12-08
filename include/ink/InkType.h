@@ -25,7 +25,7 @@ public:
         F32,
         F64,
         String,
-        Bool,
+        Boolean,
         Char,
         Handle
     };
@@ -53,7 +53,7 @@ public:
     InkType(u64 value) : m_type(InkTypeId::U64) { m_data.u64_value = value; }
     InkType(f32 value) : m_type(InkTypeId::F32) { m_data.f32_value = value; }
     InkType(f64 value) : m_type(InkTypeId::F64) { m_data.f64_value = value; }
-    InkType(bool value) : m_type(InkTypeId::Bool) { m_data.bool_value = value; }
+    InkType(bool value) : m_type(InkTypeId::Boolean) { m_data.bool_value = value; }
     InkType(char value) : m_type(InkTypeId::Char) { m_data.char_value = value; }
     InkType(ink_h value) : m_type(InkTypeId::Handle) { m_data.handle_value = value; }
 
@@ -115,22 +115,22 @@ public:
 
     Variant toVariant() const {
         switch (m_type) {
-        case InkTypeId::I8:     return static_cast<i8>(m_data.i64_value);
-        case InkTypeId::I16:    return static_cast<i16>(m_data.i64_value);
-        case InkTypeId::I32:    return static_cast<i32>(m_data.i64_value);
-        case InkTypeId::I64:    return m_data.i64_value;
-        case InkTypeId::U8:     return static_cast<u8>(m_data.u64_value);
-        case InkTypeId::U16:    return static_cast<u16>(m_data.u64_value);
-        case InkTypeId::U32:    return static_cast<u32>(m_data.u64_value);
-        case InkTypeId::U64:    return m_data.u64_value;
-        case InkTypeId::F32:    return m_data.f32_value;
-        case InkTypeId::F64:    return m_data.f64_value;
-        case InkTypeId::Bool:   return m_data.bool_value;
-        case InkTypeId::Char:   return m_data.char_value;
-        case InkTypeId::Handle: return m_data.handle_value;
-        case InkTypeId::String: return m_data.string_value ? *m_data.string_value : std::string();
+        case InkTypeId::I8:         return static_cast<i8>(m_data.i64_value);
+        case InkTypeId::I16:        return static_cast<i16>(m_data.i64_value);
+        case InkTypeId::I32:        return static_cast<i32>(m_data.i64_value);
+        case InkTypeId::I64:        return m_data.i64_value;
+        case InkTypeId::U8:         return static_cast<u8>(m_data.u64_value);
+        case InkTypeId::U16:        return static_cast<u16>(m_data.u64_value);
+        case InkTypeId::U32:        return static_cast<u32>(m_data.u64_value);
+        case InkTypeId::U64:        return m_data.u64_value;
+        case InkTypeId::F32:        return m_data.f32_value;
+        case InkTypeId::F64:        return m_data.f64_value;
+        case InkTypeId::Boolean:    return m_data.bool_value;
+        case InkTypeId::Char:       return m_data.char_value;
+        case InkTypeId::Handle:     return m_data.handle_value;
+        case InkTypeId::String:     return m_data.string_value ? *m_data.string_value : std::string();
         case InkTypeId::Invalid:
-        default:                return std::monostate{};
+        default:                    return std::monostate{};
         }
     }
 
