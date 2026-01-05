@@ -17,7 +17,6 @@ ThreadPool::ThreadPool(size_t max_workers) :
 
                     if (_stop && _tasks.empty()) return;
 
-                    if (_tasks.empty()) continue;
                     task = std::move(_tasks.front());
                     _tasks.pop();
                 }
