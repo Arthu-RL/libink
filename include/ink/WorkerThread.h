@@ -13,16 +13,16 @@
 
 namespace ink {
 
-enum Policy
-{
-    KillImediately = 0,
-    WaitProcessFinish = 1,
-    WaitTimeout = 2
-};
-
 class INK_API WorkerThread
 {
 public:
+    enum Policy
+    {
+        KillImediately = 0,
+        WaitProcessFinish = 1,
+        WaitTimeout = 2
+    };
+
     WorkerThread();
     WorkerThread(Policy policy);
     WorkerThread(size_t timeoutSecs);
