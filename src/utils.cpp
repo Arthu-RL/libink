@@ -1,15 +1,21 @@
 #include "../include/ink/utils.h"
 
+#include <charconv>
+
 #include "../include/ink/InkAssert.h"
 
 namespace ink {
 
 namespace utils {
 
+constexpr size_t MAX_CHUNKS = 4096;
+
 std::string exec_command(const std::string& cmd)
 {
     FILE* pipe = popen(cmd.data(), "r");
-    INK_ASSERT_MSG(pipe, "PIPE DIDN'T OPEN!");
+    if (!pipe) {
+        return "ERROR: PIPE_FAILED";
+    }
 
     std::string result;
     result.reserve(1024);
@@ -18,8 +24,7 @@ std::string exec_command(const std::string& cmd)
 
     size_t bytesRead;
     while ((bytesRead = fread(buffer, 1, MAX_CHUNKS, pipe)) > 0) {
-        result.append(buffer, 0, bytesRead);
-        if (bytesRead < MAX_CHUNKS) break;
+        result.append(buffer, bytesRead);
     }
 
     pclose(pipe);
@@ -29,14 +34,20 @@ std::string exec_command(const std::string& cmd)
 
 int cto_int(char c) noexcept
 {
-    if (c >= '0' && c <= '9')
-    {
+    if (c >= '0' && c <= '9') {
         return c - '0';
-    } else
-    {
-        return -1;
     }
+    return -1;
 }
+
+size_t string_int(std::string_view s) noexcept
+{
+    // Use fast string-to-int conversion avoiding exceptions from std::stoul
+    size_t result = -1;
+    std::from_chars(s.data(), s.data()+s.size(), result);
+    return result;
+}
+
 
 }
 
