@@ -47,7 +47,7 @@ private:
 
     std::atomic<bool> _isRunning;
     std::atomic<bool> _isProcessing;
-    std::atomic<bool> _requestProcessing;
+    bool _requestProcessing;
 
     Policy _policy;
     size_t _timeoutMs;
