@@ -27,7 +27,7 @@ int add(int a, int b) {
 class TestWorkerThread : public ink::WorkerThread
 {
 public:
-    TestWorkerThread(ink::Policy policy = ink::Policy::KillImediately, size_t timeoutSecs = 0) :
+    TestWorkerThread(ink::WorkerThread::Policy policy = ink::WorkerThread::Policy::WaitTimeout, size_t timeoutSecs = 0) :
         WorkerThread(policy, timeoutSecs),
         _processCount(0)
     {
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     INK_ERROR << "test";
     INK_FATAL << "test";
 
-    TestWorkerThread worker(ink::Policy::WaitProcessFinish, 1);
+    TestWorkerThread worker(ink::WorkerThread::Policy::WaitProcessFinish, 1);
 
     worker.start();
 

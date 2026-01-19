@@ -1,43 +1,15 @@
 #include "../include/ink/WorkerThread.h"
+
 #include <chrono>
 
 namespace ink {
 
-WorkerThread::WorkerThread() :
-    _isRunning(false),
-    _isProcessing(false),
-    _policy(Policy::KillImediately),
-    _timeoutMs(0),
-    _onStartCallback(nullptr),
-    _onDestructionCallback(nullptr)
-{
-}
-
-WorkerThread::WorkerThread(Policy policy) :
-    _isRunning(false),
-    _isProcessing(false),
-    _policy(policy),
-    _timeoutMs(0),
-    _onStartCallback(nullptr),
-    _onDestructionCallback(nullptr)
-{
-}
-
-WorkerThread::WorkerThread(size_t timeoutSecs) :
-    _isRunning(false),
-    _isProcessing(false),
-    _policy(Policy::WaitTimeout),
-    _timeoutMs(timeoutSecs*1000),
-    _onStartCallback(nullptr),
-    _onDestructionCallback(nullptr)
-{
-}
-
 WorkerThread::WorkerThread(Policy policy, size_t timeoutSecs) :
     _isRunning(false),
     _isProcessing(false),
+    _requestProcessing(false),
     _policy(policy),
-    _timeoutMs(timeoutSecs*1000),
+    _timeoutMs(timeoutSecs * 1000),
     _onStartCallback(nullptr),
     _onDestructionCallback(nullptr)
 {
@@ -56,6 +28,7 @@ void WorkerThread::start()
         return;
 
     _isRunning = true;
+    _requestProcessing = false;
 
     if (_onStartCallback)
     {
@@ -69,41 +42,17 @@ void WorkerThread::stop()
 {
     {
         std::lock_guard<std::mutex> lock(_mutex);
-
         if (!_isRunning)
             return;
 
         _isRunning = false;
+        _requestProcessing = true;
     }
-
-    // Release waiting
     _cv.notify_all();
 
-    if (_policy == Policy::KillImediately)
+    if (_thread.joinable())
     {
-        if (_thread.joinable())
-        {
-            _thread.join();
-        }
-    }
-    else if (_policy == Policy::WaitProcessFinish)
-    {
-        while (_isProcessing)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-
-        if (_thread.joinable())
-        {
-            _thread.join();
-        }
-    }
-    else if (_policy == Policy::WaitTimeout)
-    {
-        if (_thread.joinable())
-        {
-            _thread.join();
-        }
+        _thread.join();
     }
 
     if (_onDestructionCallback)
@@ -112,12 +61,21 @@ void WorkerThread::stop()
     }
 }
 
-void WorkerThread::setOnStartAction(std::function<void()> onStartCallback)
+void WorkerThread::wake()
+{
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _requestProcessing = true;
+    }
+    _cv.notify_one();
+}
+
+void WorkerThread::setOnStartAction(WTCallback onStartCallback) noexcept
 {
     _onStartCallback = onStartCallback;
 }
 
-void WorkerThread::setOnDestructionAction(std::function<void()> onDestructionCallback)
+void WorkerThread::setOnDestructionAction(WTCallback onDestructionCallback) noexcept
 {
     _onDestructionCallback = onDestructionCallback;
 }
@@ -130,16 +88,14 @@ void WorkerThread::_process()
         process();
         _isProcessing = false;
 
-        if (_policy == Policy::WaitTimeout && _timeoutMs > 0)
-        {
-            std::unique_lock<std::mutex> lock(_mutex);
-            _cv.wait_for(lock, std::chrono::milliseconds(_timeoutMs),
-                         [this]() { return !_isRunning; });
-        }
-        else if (_timeoutMs > 0)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(_timeoutMs));
-        }
+        if (!_isRunning) break;
+
+        std::unique_lock<std::mutex> lock(_mutex);
+        _cv.wait_for(lock, std::chrono::milliseconds(_timeoutMs), [this]() {
+            return !_isRunning || _requestProcessing;
+        });
+
+        _requestProcessing = false;
     }
 }
 
