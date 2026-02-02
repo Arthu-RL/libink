@@ -19,55 +19,61 @@ RingBuffer::~RingBuffer()
 
 size_t RingBuffer::read(char* dest, size_t maxLen)
 {
-    if (maxLen == 0 || _size == 0) return 0;
+    if (maxLen == 0 || _size == 0)
+        return 0;
 
-    size_t bytesToRead = std::min(maxLen, _size);
+    const size_t toRead = std::min(maxLen, _size);
 
-    // Handle wrap-around case
-    if (_readPos + bytesToRead <= _capacity) {
-        // Simple case: no wrap-around
-        memcpy(dest, _buffer + _readPos, bytesToRead);
-        _readPos = (_readPos + bytesToRead) % _capacity;
-    } else {
-        // Complex case: need to wrap around
-        size_t firstChunk = _capacity - _readPos;
-        memcpy(dest, _buffer + _readPos, firstChunk);
+    const size_t tail = _capacity - _readPos;
+    const size_t first = std::min(toRead, tail);
 
-        size_t secondChunk = bytesToRead - firstChunk;
-        memcpy(dest + firstChunk, _buffer, secondChunk);
+    // First chunk
+    memcpy(dest, _buffer + _readPos, first);
 
-        _readPos = secondChunk;
-    }
+    // Wrap-around chunk
+    if (toRead > first)
+        memcpy(dest + first, _buffer, toRead - first);
 
-    _size -= bytesToRead;
-    return bytesToRead;
+    _readPos += toRead;
+    if (_readPos >= _capacity)
+        _readPos -= _capacity;
+
+    _size -= toRead;
+    return toRead;
 }
 
 size_t RingBuffer::write(const char* data, size_t len)
 {
-    if (len == 0 || _size == _capacity) return 0;
+    if (len == 0 || _size == _capacity)
+        return 0;
 
-    size_t availableSpace = _capacity - _size;
-    size_t bytesToWrite = std::min(len, availableSpace);
+    const size_t toWrite = std::min(len, _capacity - _size);
 
-    // Handle wrap-around case
-    if (_writePos + bytesToWrite <= _capacity) {
-        // Simple case: no wrap-around
-        memcpy(_buffer + _writePos, data, bytesToWrite);
-        _writePos = (_writePos + bytesToWrite) % _capacity;
-    } else {
-        // Complex case: need to wrap around
-        size_t firstChunk = _capacity - _writePos;
-        memcpy(_buffer + _writePos, data, firstChunk);
+    const size_t tail = _capacity - _writePos;
+    const size_t first = std::min(toWrite, tail);
 
-        size_t secondChunk = bytesToWrite - firstChunk;
-        memcpy(_buffer, data + firstChunk, secondChunk);
+    memcpy(_buffer + _writePos, data, first);
 
-        _writePos = secondChunk;
-    }
+     // Wrap-around chunk
+    if (toWrite > first)
+        memcpy(_buffer, data + first, toWrite - first);
 
-    _size += bytesToWrite;
-    return bytesToWrite;
+    _writePos += toWrite;
+    if (_writePos >= _capacity)
+        _writePos -= _capacity;
+
+    _size += toWrite;
+    return toWrite;
+}
+
+size_t RingBuffer::write(std::string_view sv)
+{
+    return write(sv.data(), sv.size());
+}
+
+size_t RingBuffer::write(const std::string& s)
+{
+    return write(s.data(), s.size());
 }
 
 const char* RingBuffer::getReadBuffer(size_t& availableData) const

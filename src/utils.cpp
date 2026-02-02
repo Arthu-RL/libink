@@ -48,6 +48,14 @@ size_t string_int(std::string_view s) noexcept
     return result;
 }
 
+uint64_t nowMillis()
+{
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return static_cast<uint64_t>(ts.tv_sec) * 1000
+           + static_cast<uint64_t>(ts.tv_nsec) / 1'000'000;
+}
 
 }
 

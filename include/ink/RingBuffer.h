@@ -4,6 +4,7 @@
 #pragma once
 
 #include <math.h>
+#include <string>
 
 #include "ink/ink_base.hpp"
 
@@ -23,6 +24,8 @@ public:
     size_t read(char* dest, size_t maxLen);
     // Write data to the buffer
     size_t write(const char* data, size_t len);
+    size_t write(std::string_view sv);
+    size_t write(const std::string& s);
 
     // Get a contiguous read buffer (for zero-copy operations)
     const char* getReadBuffer(size_t& availableData) const;

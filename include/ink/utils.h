@@ -15,6 +15,8 @@ int cto_int(char c) noexcept;
 
 size_t string_int(std::string_view s) noexcept;
 
+uint64_t nowMillis();
+
 }
 
 }

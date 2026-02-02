@@ -27,6 +27,7 @@
 #include <ink/InkedList.h>
 #include <ink/Queue.h>
 #include <ink/RingBuffer.h>
+#include <ink/TimerWheel.h>
 #include <ink/ThreadPool.h>
 #include <ink/String.h>
 #include <ink/utils.h>
