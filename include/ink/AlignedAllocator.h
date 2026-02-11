@@ -1,65 +1,91 @@
-#ifndef ALIGNEDALLOCATOR_H
-#define ALIGNEDALLOCATOR_H
+#ifndef INK_ALIGNED_ALLOCATOR_HPP
+#define INK_ALIGNED_ALLOCATOR_HPP
 
-#pragma once
-
-#include <algorithm>
-#include <cstddef>
-
-#include "ink/ink_base.hpp"
+#include <cstdlib>
+#include <memory>
+#include <new>
+#include <limits>
+#include <type_traits>
 
 namespace ink {
 
-// Custom aligned allocator for high-performance memory access
-template<typename T, size_t Alignment = 32> // 32-byte alignment for AVX instructions
-class INK_API AlignedAllocator {
+template<typename T, std::size_t Alignment = 32>
+class AlignedAllocator {
 public:
     using value_type = T;
     using pointer = T*;
     using const_pointer = const T*;
-    using reference = T&;
-    using const_reference = const T&;
-    using difference_type = ptrdiff_t;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
 
-    template<typename U>
+    using propagate_on_container_move_assignment = std::true_type;
+    using is_always_equal = std::true_type;
+
+    template<class U>
     struct rebind {
         using other = AlignedAllocator<U, Alignment>;
     };
 
-    AlignedAllocator() noexcept = default;
-    template<typename U>
-    AlignedAllocator(const AlignedAllocator<U, Alignment>&) noexcept {}
+    static_assert((Alignment & (Alignment - 1)) == 0,
+                  "Alignment must be power of two");
 
-    pointer allocate(size_t n) {
-        void* ptr = nullptr;
-#if defined(_MSC_VER)
-        ptr = _aligned_malloc(n * sizeof(T), Alignment);
-#else
-        if (posix_memalign(&ptr, Alignment, n * sizeof(T))) {
-            ptr = nullptr;
-        }
-#endif
+    static_assert(Alignment >= alignof(void*),
+                  "Alignment must be >= pointer alignment");
 
-        if (!ptr) {
+public:
+    constexpr AlignedAllocator() noexcept = default;
+
+    template<class U>
+    constexpr AlignedAllocator(const AlignedAllocator<U, Alignment>&) noexcept {}
+
+    // alloc
+    [[nodiscard]]
+    pointer allocate(size_type n)
+    {
+        if (n > std::numeric_limits<size_type>::max() / sizeof(T))
             throw std::bad_alloc();
-        }
+
+        void* ptr = nullptr;
+        const size_type bytes = n * sizeof(T);
+
+#if defined(_MSC_VER)
+        ptr = _aligned_malloc(bytes, Alignment);
+        if (!ptr) throw std::bad_alloc();
+#else
+        if (posix_memalign(&ptr, Alignment, bytes) != 0)
+            throw std::bad_alloc();
+#endif
 
         return static_cast<pointer>(ptr);
     }
 
-    void deallocate(pointer p, size_t) noexcept {
+    // dealloc
+    void deallocate(pointer p, size_type) noexcept
+    {
 #if defined(_MSC_VER)
         _aligned_free(p);
 #else
-        free(p);
+        std::free(p);
 #endif
     }
 
-    // Required for C++11 allocator compatibility
-    bool operator==(const AlignedAllocator&) const noexcept { return true; }
-    bool operator!=(const AlignedAllocator&) const noexcept { return false; }
+    template<class U, class... Args>
+    void construct(U* p, Args&&... args)
+    {
+        ::new ((void*)p) U(std::forward<Args>(args)...);
+    }
+
+    template<class U>
+    void destroy(U* p)
+    {
+        p->~U();
+    }
+
+    // cmp
+    constexpr bool operator==(const AlignedAllocator&) const noexcept { return true; }
+    constexpr bool operator!=(const AlignedAllocator&) const noexcept { return false; }
 };
 
-}
+} // namespace ink
 
-#endif // ALIGNEDALLOCATOR_H
+#endif

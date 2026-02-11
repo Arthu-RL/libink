@@ -125,11 +125,27 @@
 /*====================
  * TYPE DEFINITIONS
  *====================*/
-#include <cstdint>
 #include <cstring>
 
-/* Return codes */
-enum class ink_result_t {
+using i8 = signed char;
+using i16 = signed short int;
+using i32 = signed int;
+using i64 = signed long int;
+
+using u8 = unsigned char;
+using u16 = unsigned short int;
+using u32 = unsigned int;
+using u64 = unsigned long int;
+
+using usize = size_t;
+using isize = std::ptrdiff_t;
+
+using f32 = float;
+using f64 = double;
+
+using ink_h = void*;
+
+enum ink_result_t : i32 {
     SUCCESS = 0,
     ERROR_GENERIC = -1,
     ERROR_INVALID_PARAM = -2,
@@ -138,21 +154,6 @@ enum class ink_result_t {
     ERROR_NOT_SUPPORTED = -5,
     ERROR_IO = -6
 };
-
-using i8 = int8_t;
-using i16 = int16_t;
-using i32 = int32_t;
-using i64 = int64_t;
-
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
-
-using f32 = float;
-using f64 = double;
-
-using ink_h = void*;
 
 /*====================
  * UTILITY MACROS
