@@ -15,11 +15,13 @@
  * INCLUDE MODULES
  *====================*/
 #include <ink/AlignedAllocator.h>
+#include <ink/ArenaAllocator.h>
 #include <ink/EnhancedJson.h>
 #include <ink/EnhancedJsonUtils.h>
 #include <ink/Inkogger.h>
 #include <ink/InkAssert.h>
 #include <ink/InkException.h>
+#include <ink/InkixTree.h>
 #include <ink/InkType.h>
 #include <ink/InkOtp.h>
 #include <ink/LastWish.h>

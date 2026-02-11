@@ -13,13 +13,6 @@ namespace ink {
 template <typename T>
 class INK_API InkedList {
 public:
-    struct Node {
-        Node(const T& _data) : data(_data), prev(nullptr), next(nullptr) {}
-        T data;
-        Node* prev;
-        Node* next;
-    };
-
     InkedList() : root(nullptr), tail(nullptr), size(0)
     {
         // Empty
@@ -72,9 +65,6 @@ public:
     InkedList(const InkedList& inkedList) = delete;
     InkedList& operator=(const InkedList& inkedList) = delete;
     InkedList& operator=(InkedList&& inkedList) = delete;
-
-    // Methods
-    Node* head() noexcept { return root; }
 
     size_t length() const noexcept { return size; }
 
@@ -295,6 +285,13 @@ public:
     }
 
 private:
+    struct Node {
+        Node(const T& _data) : data(_data), prev(nullptr), next(nullptr) {}
+        T data;
+        Node* prev;
+        Node* next;
+    };
+
     Node* root; // First element, that can have a header
     Node* tail; // Back
     size_t size;
