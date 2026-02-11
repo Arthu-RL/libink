@@ -49,7 +49,7 @@ void InkixTree::insert(std::string_view key)
         // Find match in first caracter at least
         auto it = std::find_if(current->children.begin(), current->children.end(),
             [&](const auto& node) {
-                return !node.label.empty() && node->label[0] == key[0];
+                return !node->label.empty() && node->label[0] == key[0];
             });
 
         // If no match, so push a new brannch
