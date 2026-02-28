@@ -5,17 +5,19 @@
 
 #include <string>
 
+#include "../include/ink/ink_base.hpp"
+
 namespace ink {
 
 namespace utils {
 
 std::string exec_command(const std::string& cmd);
 
-int cto_int(char c) noexcept;
+i32 cto_int(char c) noexcept;
 
-size_t string_int(std::string_view s) noexcept;
+usize string_int(std::string_view s) noexcept;
 
-uint64_t nowMillis();
+u64 nowMillis();
 
 }
 

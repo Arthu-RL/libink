@@ -63,7 +63,7 @@ TimerNode* TimerWheel::tick()
     _wheel[_currentSlot] = nullptr;
 
     _currentSlot = (_currentSlot + 1) % _wheel.size();
-    _lastTickMs = ink::utils::nowMillis();
+    _lastTickMs += _tickMs;
 
     return expiredList;
 }

@@ -1,14 +1,13 @@
 #include "../include/ink/utils.h"
 
+#include <time.h>
 #include <charconv>
-
-#include "../include/ink/InkAssert.h"
 
 namespace ink {
 
 namespace utils {
 
-constexpr size_t MAX_CHUNKS = 4096;
+constexpr usize MAX_CHUNKS = 4096;
 
 std::string exec_command(const std::string& cmd)
 {
@@ -32,7 +31,7 @@ std::string exec_command(const std::string& cmd)
     return result;
 }
 
-int cto_int(char c) noexcept
+i32 cto_int(char c) noexcept
 {
     if (c >= '0' && c <= '9') {
         return c - '0';
@@ -40,7 +39,7 @@ int cto_int(char c) noexcept
     return -1;
 }
 
-size_t string_int(std::string_view s) noexcept
+usize string_int(std::string_view s) noexcept
 {
     // Use fast string-to-int conversion avoiding exceptions from std::stoul
     size_t result = -1;
@@ -48,7 +47,7 @@ size_t string_int(std::string_view s) noexcept
     return result;
 }
 
-uint64_t nowMillis()
+u64 nowMillis()
 {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
