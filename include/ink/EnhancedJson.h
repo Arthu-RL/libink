@@ -665,7 +665,7 @@ public:
      * @brief Convert to CBOR binary format
      * @return Vector of bytes
      */
-    std::vector<uint8_t> toCBOR() const {
+    std::vector<u8> toCBOR() const {
         return nlohmann::json::to_cbor(*this);
     }
 
@@ -673,7 +673,7 @@ public:
      * @brief Convert to MessagePack binary format
      * @return Vector of bytes
      */
-    std::vector<uint8_t> toMsgPack() const {
+    std::vector<u8> toMsgPack() const {
         return nlohmann::json::to_msgpack(*this);
     }
 
@@ -681,7 +681,7 @@ public:
      * @brief Convert to BSON binary format
      * @return Vector of bytes
      */
-    std::vector<uint8_t> toBSON() const {
+    std::vector<u8> toBSON() const {
         return nlohmann::json::to_bson(*this);
     }
 
@@ -690,7 +690,7 @@ public:
      * @param data CBOR binary data
      * @return EnhancedJson object
      */
-    static EnhancedJson fromCBOR(const std::vector<uint8_t>& data) {
+    static EnhancedJson fromCBOR(const std::vector<u8>& data) {
         return EnhancedJson(nlohmann::json::from_cbor(data));
     }
 
@@ -699,7 +699,7 @@ public:
      * @param data MessagePack binary data
      * @return EnhancedJson object
      */
-    static EnhancedJson fromMsgPack(const std::vector<uint8_t>& data) {
+    static EnhancedJson fromMsgPack(const std::vector<u8>& data) {
         return EnhancedJson(nlohmann::json::from_msgpack(data));
     }
 
@@ -708,7 +708,7 @@ public:
      * @param data BSON binary data
      * @return EnhancedJson object
      */
-    static EnhancedJson fromBSON(const std::vector<uint8_t>& data) {
+    static EnhancedJson fromBSON(const std::vector<u8>& data) {
         return EnhancedJson(nlohmann::json::from_bson(data));
     }
 

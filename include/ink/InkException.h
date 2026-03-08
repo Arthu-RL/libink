@@ -142,7 +142,7 @@ public:
      * @brief Get the line where the exception was thrown
      * @return The line number
      */
-    uint32_t line() const noexcept {
+    u32 line() const noexcept {
         return m_line;
     }
 

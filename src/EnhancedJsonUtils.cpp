@@ -42,7 +42,7 @@ std::string EnhancedJsonUtils::toString(const EnhancedJson& json, bool pretty, i
     return pretty ? json.toPrettyString(indent) : json.toCompactString();
 }
 
-std::vector<uint8_t> EnhancedJsonUtils::toBinary(const EnhancedJson& json, const std::string& format) {
+std::vector<u8> EnhancedJsonUtils::toBinary(const EnhancedJson& json, const std::string& format) {
     try {
         if (format == "cbor") {
             return json.toCBOR();
@@ -60,7 +60,7 @@ std::vector<uint8_t> EnhancedJsonUtils::toBinary(const EnhancedJson& json, const
     }
 }
 
-EnhancedJson EnhancedJsonUtils::fromBinary(const std::vector<uint8_t>& data, const std::string& format) {
+EnhancedJson EnhancedJsonUtils::fromBinary(const std::vector<u8>& data, const std::string& format) {
     try {
         if (format == "cbor") {
             return EnhancedJson::fromCBOR(data);

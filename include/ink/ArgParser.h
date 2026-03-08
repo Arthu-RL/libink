@@ -21,7 +21,7 @@ public:
     ArgParser& operator=(const ArgParser&) = delete;
     ArgParser& operator=(ArgParser&&) = delete;
 
-    static std::string argsToString(int argc, char** argv);
+    static std::string argsToString(i32 argc, char** argv);
 
     void add_argument(const std::string& short_id,
                       const std::string& long_id,

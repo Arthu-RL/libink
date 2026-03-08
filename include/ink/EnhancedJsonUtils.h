@@ -24,8 +24,8 @@ public:
 
     // Serialization
     static std::string toString(const EnhancedJson& json, bool pretty = false, i8 indent = 4);
-    static std::vector<uint8_t> toBinary(const EnhancedJson& json, const std::string& format = "cbor");
-    static EnhancedJson fromBinary(const std::vector<uint8_t>& data, const std::string& format = "cbor");
+    static std::vector<u8> toBinary(const EnhancedJson& json, const std::string& format = "cbor");
+    static EnhancedJson fromBinary(const std::vector<u8>& data, const std::string& format = "cbor");
 
     // Type checking utilities
     static bool isArray(const EnhancedJson& json);

@@ -52,8 +52,8 @@ u64 nowMillis()
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
 
-    return static_cast<uint64_t>(ts.tv_sec) * 1000
-           + static_cast<uint64_t>(ts.tv_nsec) / 1'000'000;
+    return static_cast<u64>(ts.tv_sec) * 1000
+           + static_cast<u64>(ts.tv_nsec) / 1'000'000;
 }
 
 }

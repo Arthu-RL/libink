@@ -12,10 +12,10 @@ ArgParser::ArgParser(const std::string& description) :
     // Empty
 }
 
-std::string ArgParser::argsToString(int argc, char** argv)
+std::string ArgParser::argsToString(i32 argc, char** argv)
 {
     std::string all_args;
-    for (int i = 1; i < argc; i++) {
+    for (i32 i = 1; i < argc; i++) {
         all_args += std::string(argv[i]) + " ";
     }
     return all_args;

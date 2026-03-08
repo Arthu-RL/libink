@@ -70,8 +70,8 @@ TimerNode* TimerWheel::tick()
 
 i32 TimerWheel::timeToNextTickMillis() const
 {
-    uint64_t now = ink::utils::nowMillis();
-    uint64_t elapsed = now - _lastTickMs;
+    u64 now = ink::utils::nowMillis();
+    u64 elapsed = now - _lastTickMs;
 
     if (elapsed >= _tickMs)
         return 0;
