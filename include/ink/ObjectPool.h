@@ -35,10 +35,12 @@ public:
         }
     }
 
-    T* acquire() {
+    T* acquire(bool *expanded = nullptr) {
         if (_freeList.empty()) {
             _currentCapacity *= 2;
             expand(_currentCapacity);
+            if (expanded)
+                *expanded = true;
         }
         T* obj = _freeList.back();
         _freeList.pop_back();
@@ -52,7 +54,7 @@ public:
     // Get fisrt block memory region
     void* getRawBuffer() {
         if (_allBlocks.empty()) return nullptr;
-        return _allBlocks[0];
+        return _allBlocks[_allBlocks.size()-1];
     }
 
     size_t getRawBufferSize() {

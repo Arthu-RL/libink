@@ -68,7 +68,7 @@ TimerNode* TimerWheel::tick()
     return expiredList;
 }
 
-i32 TimerWheel::timeToNextTickMillis() const
+u64 TimerWheel::timeToNextTickMillis() const
 {
     u64 now = ink::utils::nowMillis();
     u64 elapsed = now - _lastTickMs;
@@ -76,7 +76,7 @@ i32 TimerWheel::timeToNextTickMillis() const
     if (elapsed >= _tickMs)
         return 0;
 
-    return static_cast<i32>(_tickMs - elapsed);
+    return static_cast<u64>(_tickMs - elapsed);
 }
 
 

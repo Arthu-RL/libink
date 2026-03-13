@@ -46,13 +46,13 @@ public:
         }
     }
 
-    i32 timeToNextTickMillis() const;
+    u64 timeToNextTickMillis() const;
 
 private:
     std::vector<TimerNode*> _wheel;
     u32 _currentSlot;
 
-    u32 _tickMs;
+    u64 _tickMs;
     u64 _lastTickMs;
 };
 
