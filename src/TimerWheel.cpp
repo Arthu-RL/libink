@@ -4,10 +4,11 @@
 
 namespace ink {
 
-TimerWheel::TimerWheel(u32 size) :
-    _wheel(size, nullptr),
+TimerWheel::TimerWheel(u32 ticksToLive, u32 tickIntervalMs) :
+    _ticksToLive(ticksToLive),
+    _wheel(ticksToLive, nullptr),
     _currentSlot(0),
-    _tickMs(1000),
+    _tickMs(tickIntervalMs),
     _lastTickMs(ink::utils::nowMillis())
 {
     // Empty
@@ -18,11 +19,11 @@ void TimerWheel::update(TimerNode* node)
     // Unlink from old position (if any)
     unlink(node);
 
-    // Calculate new slot (Current + Timeout - 1)
-    // If timeout is 10s, and we are at slot 5, it goes to slot 15.
-    // We wrap around using modulo.
-    u32 ticksToLive = _wheel.size() - 1;
-    u32 newSlot = (_currentSlot + ticksToLive) % _wheel.size();
+    // Calculate new slot (Current + Timeout)
+    // If current is 5 and timeout is 60, newSlot is (5 + 60 + 1) % 60 = 6.
+    // This means it will expire exactly one full revolution
+    // The +1 ensures we don't land in the "current" slot so it willl not expire early
+    u32 newSlot = (_currentSlot + _ticksToLive + 1) % _wheel.size();
 
     // Link to new bucket
     node->slotIndex = newSlot;

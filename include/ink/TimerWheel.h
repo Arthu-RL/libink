@@ -16,7 +16,7 @@ class TimerWheel {
 public:
     // Resolution: 1 tick per second (or 100ms)
     // Size: 60 slots (for 60 seconds timeout)
-    TimerWheel(u32 size = 60);
+    TimerWheel(u32 ticksToLive = 60, u32 tickIntervalMs = 1000);
 
     // O(1) - Add or Update session
     void update(TimerNode* node);
@@ -46,9 +46,12 @@ public:
         }
     }
 
+    u64 getNextTickTime() const { return _lastTickMs + _tickMs; }
+
     u64 timeToNextTickMillis() const;
 
 private:
+    u32 _ticksToLive;
     std::vector<TimerNode*> _wheel;
     u32 _currentSlot;
 
