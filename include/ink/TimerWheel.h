@@ -48,11 +48,12 @@ public:
 
     u64 getNextTickTime() const { return _lastTickMs + _tickMs; }
 
-    u64 timeToNextTickMillis() const;
+    u64 timeToNextTickMillis(const u64& nowMs) const;
 
 private:
     u32 _ticksToLive;
     std::vector<TimerNode*> _wheel;
+    u32 _wheelMask;
     u32 _currentSlot;
 
     u64 _tickMs;
@@ -61,4 +62,4 @@ private:
 
 }
 
-#endif // LASTWISH_H
+#endif // TIMERWHEEL_H

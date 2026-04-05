@@ -50,7 +50,7 @@ usize string_int(std::string_view s) noexcept
 u64 nowMillis()
 {
     timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+    clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
 
     return static_cast<u64>(ts.tv_sec) * 1000
            + static_cast<u64>(ts.tv_nsec) / 1'000'000;

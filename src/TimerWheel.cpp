@@ -6,12 +6,20 @@ namespace ink {
 
 TimerWheel::TimerWheel(u32 ticksToLive, u32 tickIntervalMs) :
     _ticksToLive(ticksToLive),
-    _wheel(ticksToLive, nullptr),
     _currentSlot(0),
     _tickMs(tickIntervalMs),
     _lastTickMs(ink::utils::nowMillis())
 {
-    // Empty
+    u32 requiredSize = _ticksToLive + 1;
+    // Get power of 2 number next tp requiredSize
+    u32 power = 1;
+    while (power < requiredSize)
+    {
+        power <<= 1;
+    }
+
+    _wheel.assign(power, nullptr);
+    _wheelMask = power - 1;
 }
 
 void TimerWheel::update(TimerNode* node)
@@ -20,10 +28,9 @@ void TimerWheel::update(TimerNode* node)
     unlink(node);
 
     // Calculate new slot (Current + Timeout)
-    // If current is 5 and timeout is 60, newSlot is (5 + 60 + 1) % 60 = 6.
+    // If current is 5 and timeout is 60, newSlot is (5 + 60) % 60 = 5.
     // This means it will expire exactly one full revolution
-    // The +1 ensures we don't land in the "current" slot so it willl not expire early
-    u32 newSlot = (_currentSlot + _ticksToLive + 1) % _wheel.size();
+    u32 newSlot = (_currentSlot + _ticksToLive) & _wheelMask;
 
     // Link to new bucket
     node->slotIndex = newSlot;
@@ -63,16 +70,15 @@ TimerNode* TimerWheel::tick()
     TimerNode* expiredList = _wheel[_currentSlot];
     _wheel[_currentSlot] = nullptr;
 
-    _currentSlot = (_currentSlot + 1) % _wheel.size();
+    _currentSlot = (_currentSlot + 1) & _wheelMask;
     _lastTickMs += _tickMs;
 
     return expiredList;
 }
 
-u64 TimerWheel::timeToNextTickMillis() const
+u64 TimerWheel::timeToNextTickMillis(const u64& nowMs) const
 {
-    u64 now = ink::utils::nowMillis();
-    u64 elapsed = now - _lastTickMs;
+    u64 elapsed = nowMs - _lastTickMs;
 
     if (elapsed >= _tickMs)
         return 0;
