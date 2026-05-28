@@ -2,7 +2,6 @@
 #define INKIXTREE_H
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -18,36 +17,17 @@ public:
 
     T* get(std::string_view key)
     {
-        Node* current = _root.get();
+        return &_findNode(key)->value;
+    }
 
-        while (!key.empty())
-        {
-            auto it = std::find_if(current->children.begin(), current->children.end(),
-                                   [&](const auto& node) {
-                                       return !node->label.empty() && node->label[0] == key[0];
-                                   });
+    const T* get(std::string_view key) const
+    {
+        return &_findNode(key)->value;
+    }
 
-            // No path exists -> key not found
-            if (it == current->children.end())
-            {
-                return nullptr;
-            }
-
-            Node* child = it->get();
-
-            // chack child's label match with key: Key="images/logo", Child="images/"
-            if (key.substr(0, child->label.size()) != child->label)
-            {
-                // Mismatch cmp e.g. Key="apple", Child="appish"
-                return nullptr;
-            }
-
-            // Continue moving down the tree
-            key.remove_prefix(child->label.size());
-            current = child;
-        }
-
-        return current->value ? &current->value.value() : nullptr;
+    T getCopy(std::string_view key)
+    {
+        return _findNode(key)->value;
     }
 
     void insert(std::string_view key, T value)
@@ -121,13 +101,17 @@ public:
 
 private:
     struct Node {
-        Node() : label(""), is_terminal(false) {}
-        Node(std::string_view _label, T _value, bool _is_terminal) :
+        Node() = default;
+
+        Node(std::string_view _label, T& _value, bool _is_terminal) :
             label(_label), value(_value), is_terminal(_is_terminal) {}
 
-        std::string_view label;
+        Node(std::string_view _label, T&& _value, bool _is_terminal) :
+            label(_label), value(std::move(_value)), is_terminal(_is_terminal) {}
+
+        std::string label;
         bool is_terminal = false;
-        std::optional<T> value;
+        T value;
         std::vector<std::unique_ptr<Node>> children;
     };
 
@@ -138,6 +122,40 @@ private:
             len++;
         }
         return len;
+    }
+
+    Node* _findNode(std::string_view key)
+    {
+        Node* current = _root.get();
+
+        while (!key.empty())
+        {
+            auto it = std::find_if(current->children.begin(), current->children.end(),
+                                   [&](const auto& node) {
+                                       return !node->label.empty() && node->label[0] == key[0];
+                                   });
+
+            // No path exists -> key not found
+            if (it == current->children.end())
+            {
+                return nullptr;
+            }
+
+            Node* child = it->get();
+
+            // chack child's label match with key: Key="images/logo", Child="images/"
+            if (key.substr(0, child->label.size()) != child->label)
+            {
+                // Mismatch cmp e.g. Key="apple", Child="appish"
+                return nullptr;
+            }
+
+            // Continue moving down the tree
+            key.remove_prefix(child->label.size());
+            current = child;
+        }
+
+        return current;
     }
 
 private:
