@@ -13,8 +13,6 @@ namespace ink {
 class EnhancedJsonUtils {
 public:
     // Factory methods
-    static EnhancedJson array();
-    static EnhancedJson object();
     static EnhancedJson meta_info();
 
     // File operations
@@ -44,9 +42,6 @@ public:
     static EnhancedJson merge(const EnhancedJson& a, const EnhancedJson& b);
     static EnhancedJson diff(const EnhancedJson& source, const EnhancedJson& target);
     static EnhancedJson patch(const EnhancedJson& source, const EnhancedJson& patch);
-
-    // Schema validation
-    static bool validate(const EnhancedJson& json, const EnhancedJson& schema);
 
     // Debug utilities
     static std::string getTypeName(const EnhancedJson& json);

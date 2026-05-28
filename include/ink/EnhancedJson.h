@@ -139,102 +139,30 @@ public:
 
     /**
      * @brief Get value using dot notation path
-     * @param path Path to the value (e.g., "user.address.street")
+     * @param path Path to the value (e.g., "user/address/street")
      * @param defaultValue Value to return if path is not found
      * @return Value at path or default value
      */
     template<typename T>
     T getPath(const std::string& path, const T& defaultValue = T()) const {
-        try {
-            size_t pos = path.find('.');
-
-            // No more dots, this is the final segment
-            if (pos == std::string::npos) {
-                // Try to interpret as array index if it's a number
-                try {
-                    size_t index = std::stoul(path);
-                    return get<T>(index, defaultValue);
-                } catch (...) {
-                    // Not a number, treat as object key
-                    return get<T>(path, defaultValue);
-                }
-            }
-
-            // Get the first segment
-            std::string firstSegment = path.substr(0, pos);
-            std::string remainingPath = path.substr(pos + 1);
-
-            EnhancedJson nextJson;
-
-            // Try to interpret as array index if it's a number
-            try {
-                size_t index = std::stoul(firstSegment);
-                if (is_array() && index < size()) {
-                    nextJson = EnhancedJson(at(index));
-                } else {
-                    return defaultValue;
-                }
-            } catch (...) {
-                // Not a number, treat as object key
-                if (is_object() && contains(firstSegment)) {
-                    nextJson = EnhancedJson(at(firstSegment));
-                } else {
-                    return defaultValue;
-                }
-            }
-
-            // Recursively get the value from the remaining path
-            return nextJson.getPath<T>(remainingPath, defaultValue);
-        } catch (...) {
-            // Any exception means the path doesn't exist
+        try
+        {
+            return value(nlohmann::json::json_pointer(path), defaultValue);
+        }
+        catch (...)
+        {
             return defaultValue;
         }
     }
 
     // Specialization for EnhancedJson
     EnhancedJson getPath(const std::string& path, const EnhancedJson& defaultValue = EnhancedJson()) const {
-        try {
-            size_t pos = path.find('.');
-
-            // No more dots, this is the final segment
-            if (pos == std::string::npos) {
-                // Try to interpret as array index if it's a number
-                try {
-                    size_t index = std::stoul(path);
-                    return get(index, defaultValue);
-                } catch (...) {
-                    // Not a number, treat as object key
-                    return get(path, defaultValue);
-                }
-            }
-
-            // Get the first segment
-            std::string firstSegment = path.substr(0, pos);
-            std::string remainingPath = path.substr(pos + 1);
-
-            EnhancedJson nextJson;
-
-            // Try to interpret as array index if it's a number
-            try {
-                size_t index = std::stoul(firstSegment);
-                if (is_array() && index < size()) {
-                    nextJson = EnhancedJson(at(index));
-                } else {
-                    return defaultValue;
-                }
-            } catch (...) {
-                // Not a number, treat as object key
-                if (is_object() && contains(firstSegment)) {
-                    nextJson = EnhancedJson(at(firstSegment));
-                } else {
-                    return defaultValue;
-                }
-            }
-
-            // Recursively get the value from the remaining path
-            return nextJson.getPath(remainingPath, defaultValue);
-        } catch (...) {
-            // Any exception means the path doesn't exist
+        try
+        {
+            return EnhancedJson(at(nlohmann::json::json_pointer(path)));
+        }
+        catch (...)
+        {
             return defaultValue;
         }
     }
@@ -250,48 +178,11 @@ public:
 
     /**
      * @brief Check if a path exists in the JSON object
-     * @param path The path to check (e.g., "user.address.street")
+     * @param path The path to check (e.g., "user/address/street")
      * @return True if path exists, false otherwise
      */
     bool hasPath(const std::string& path) const {
-        try {
-            size_t pos = path.find('.');
-
-            // No more dots, this is the final segment
-            if (pos == std::string::npos) {
-                // Try to interpret as array index if it's a number
-                try {
-                    size_t index = std::stoul(path);
-                    return is_array() && index < size();
-                } catch (...) {
-                    // Not a number, treat as object key
-                    return has(path);
-                }
-            }
-
-            // Get the first segment
-            std::string firstSegment = path.substr(0, pos);
-            std::string remainingPath = path.substr(pos + 1);
-
-            // Try to interpret as array index if it's a number
-            try {
-                size_t index = std::stoul(firstSegment);
-                if (is_array() && index < size()) {
-                    EnhancedJson nextJson = EnhancedJson(at(index));
-                    return nextJson.hasPath(remainingPath);
-                }
-                return false;
-            } catch (...) {
-                // Not a number, treat as object key
-                if (is_object() && contains(firstSegment)) {
-                    EnhancedJson nextJson = EnhancedJson(at(firstSegment));
-                    return nextJson.hasPath(remainingPath);
-                }
-                return false;
-            }
-        } catch (...) {
-            return false;
-        }
+        return is_object() && contains(nlohmann::json::json_pointer(path));
     }
 
     //
@@ -444,36 +335,7 @@ public:
      */
     template<typename T>
     EnhancedJson& setPath(const std::string& path, const T& value) {
-        size_t pos = path.find('.');
-
-        // No more dots, this is the final segment
-        if (pos == std::string::npos) {
-            if (!is_object()) {
-                *this = object();
-            }
-            (*this)[path] = value;
-            return *this;
-        }
-
-        // Get the first segment and remaining path
-        std::string firstSegment = path.substr(0, pos);
-        std::string remainingPath = path.substr(pos + 1);
-
-        // Ensure current object is an object
-        if (!is_object()) {
-            *this = object();
-        }
-
-        // Ensure the first segment exists and is an object
-        if (!contains(firstSegment) || !at(firstSegment).is_object()) {
-            (*this)[firstSegment] = object();
-        }
-
-        // Get the object at first segment and modify it
-        EnhancedJson nextJson = EnhancedJson((*this)[firstSegment]);
-        nextJson.setPath(remainingPath, value);
-        (*this)[firstSegment] = nextJson;
-
+        (*this)[nlohmann::json::json_pointer(path)] = value;
         return *this;
     }
 
@@ -568,68 +430,6 @@ public:
     }
 
     //
-    // Extended validation
-    //
-
-    /**
-     * @brief Check if this JSON matches a schema
-     * @param schema Schema to validate against
-     * @return True if valid, false otherwise
-     */
-    bool isValid(const nlohmann::json& schema) const {
-        // This is a simplified schema validation
-        // For production, consider a dedicated JSON Schema validator library
-
-        if (!schema.is_object()) {
-            return false;
-        }
-
-        try {
-            // Check type
-            if (schema.contains("type")) {
-                std::string type = schema["type"];
-
-                if (type == "object" && !is_object()) return false;
-                if (type == "array" && !is_array()) return false;
-                if (type == "string" && !is_string()) return false;
-                if (type == "number" && !is_number()) return false;
-                if (type == "boolean" && !is_boolean()) return false;
-                if (type == "null" && !is_null()) return false;
-            }
-
-            // Check properties for objects
-            if (is_object() && schema.contains("properties") && schema["properties"].is_object()) {
-                for (auto& [propName, propSchema] : schema["properties"].items()) {
-                    if (contains(propName)) {
-                        EnhancedJson propValue(at(propName));
-                        if (!propValue.isValid(propSchema)) {
-                            return false;
-                        }
-                    } else if (schema.contains("required") &&
-                               schema["required"].is_array() &&
-                               std::find(schema["required"].begin(), schema["required"].end(), propName) != schema["required"].end()) {
-                        return false; // Missing required property
-                    }
-                }
-            }
-
-            // Check items for arrays
-            if (is_array() && schema.contains("items") && schema["items"].is_object()) {
-                for (const auto& item : *this) {
-                    EnhancedJson itemValue(item);
-                    if (!itemValue.isValid(schema["items"])) {
-                        return false;
-                    }
-                }
-            }
-        } catch (...) {
-            return false;
-        }
-
-        return true;
-    }
-
-    //
     // Query DSL - fluent interface for JSON queries
     //
 
@@ -659,57 +459,6 @@ public:
      */
     std::string toCompactString() const {
         return dump();
-    }
-
-    /**
-     * @brief Convert to CBOR binary format
-     * @return Vector of bytes
-     */
-    std::vector<u8> toCBOR() const {
-        return nlohmann::json::to_cbor(*this);
-    }
-
-    /**
-     * @brief Convert to MessagePack binary format
-     * @return Vector of bytes
-     */
-    std::vector<u8> toMsgPack() const {
-        return nlohmann::json::to_msgpack(*this);
-    }
-
-    /**
-     * @brief Convert to BSON binary format
-     * @return Vector of bytes
-     */
-    std::vector<u8> toBSON() const {
-        return nlohmann::json::to_bson(*this);
-    }
-
-    /**
-     * @brief Create EnhancedJson from CBOR binary data
-     * @param data CBOR binary data
-     * @return EnhancedJson object
-     */
-    static EnhancedJson fromCBOR(const std::vector<u8>& data) {
-        return EnhancedJson(nlohmann::json::from_cbor(data));
-    }
-
-    /**
-     * @brief Create EnhancedJson from MessagePack binary data
-     * @param data MessagePack binary data
-     * @return EnhancedJson object
-     */
-    static EnhancedJson fromMsgPack(const std::vector<u8>& data) {
-        return EnhancedJson(nlohmann::json::from_msgpack(data));
-    }
-
-    /**
-     * @brief Create EnhancedJson from BSON binary data
-     * @param data BSON binary data
-     * @return EnhancedJson object
-     */
-    static EnhancedJson fromBSON(const std::vector<u8>& data) {
-        return EnhancedJson(nlohmann::json::from_bson(data));
     }
 
     /**
@@ -756,26 +505,6 @@ public:
         } catch (...) {
             return false;
         }
-    }
-
-    //
-    // Factory methods
-    //
-
-    /**
-     * @brief Create an empty JSON array
-     * @return EnhancedJson array
-     */
-    static EnhancedJson createArray() {
-        return EnhancedJson(nlohmann::json::array());
-    }
-
-    /**
-     * @brief Create an empty JSON object
-     * @return EnhancedJson object
-     */
-    static EnhancedJson createObject() {
-        return EnhancedJson(nlohmann::json::object());
     }
 };
 

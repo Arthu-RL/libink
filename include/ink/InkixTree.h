@@ -1,9 +1,10 @@
 #ifndef INKIXTREE_H
 #define INKIXTREE_H
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "ink/InkedList.h"
 #include "ink/ink_base.hpp"
@@ -46,7 +47,7 @@ public:
             current = child;
         }
 
-        return &current->value;
+        return current->value ? &current->value.value() : nullptr;
     }
 
     void insert(std::string_view key, T value)
@@ -126,7 +127,7 @@ private:
 
         std::string_view label;
         bool is_terminal = false;
-        T value;
+        std::optional<T> value;
         std::vector<std::unique_ptr<Node>> children;
     };
 

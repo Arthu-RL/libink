@@ -3,15 +3,6 @@
 
 namespace ink {
 
-// Factory methods
-EnhancedJson EnhancedJsonUtils::array() {
-    return EnhancedJson::createArray();
-}
-
-EnhancedJson EnhancedJsonUtils::object() {
-    return EnhancedJson::createObject();
-}
-
 EnhancedJson EnhancedJsonUtils::meta_info() {
     return EnhancedJson(nlohmann::json::meta());
 }
@@ -45,11 +36,11 @@ std::string EnhancedJsonUtils::toString(const EnhancedJson& json, bool pretty, i
 std::vector<u8> EnhancedJsonUtils::toBinary(const EnhancedJson& json, const std::string& format) {
     try {
         if (format == "cbor") {
-            return json.toCBOR();
+            return EnhancedJson::to_cbor(json);
         } else if (format == "msgpack") {
-            return json.toMsgPack();
+            return EnhancedJson::to_msgpack(json);
         } else if (format == "bson") {
-            return json.toBSON();
+            return EnhancedJson::to_bson(json);
         } else {
             std::cerr << "[ERROR] Unsupported binary format: " << format << std::endl;
             return {};
@@ -63,11 +54,11 @@ std::vector<u8> EnhancedJsonUtils::toBinary(const EnhancedJson& json, const std:
 EnhancedJson EnhancedJsonUtils::fromBinary(const std::vector<u8>& data, const std::string& format) {
     try {
         if (format == "cbor") {
-            return EnhancedJson::fromCBOR(data);
+            return EnhancedJson::from_cbor(data);
         } else if (format == "msgpack") {
-            return EnhancedJson::fromMsgPack(data);
+            return EnhancedJson::from_msgpack(data);
         } else if (format == "bson") {
-            return EnhancedJson::fromBSON(data);
+            return EnhancedJson::from_bson(data);
         } else {
             std::cerr << "[ERROR] Unsupported binary format: " << format << std::endl;
             return EnhancedJson();
@@ -129,11 +120,6 @@ EnhancedJson EnhancedJsonUtils::diff(const EnhancedJson& source, const EnhancedJ
 
 EnhancedJson EnhancedJsonUtils::patch(const EnhancedJson& source, const EnhancedJson& patchData) {
     return EnhancedJson(source.patch(patchData));
-}
-
-// Schema validation
-bool EnhancedJsonUtils::validate(const EnhancedJson& json, const EnhancedJson& schema) {
-    return json.isValid(schema);
 }
 
 std::string EnhancedJsonUtils::getTypeName(const EnhancedJson& json) {
