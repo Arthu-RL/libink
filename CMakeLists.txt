@@ -20,7 +20,6 @@ include_directories(include)
 set(ALL_LIBRARY_PATH "$ENV{LIBRARY_PATH}/lib")
 
 find_package(Threads REQUIRED)
-find_library(TBB_STATIC_LIB NAMES libtbb.a tbb HINTS ${ALL_LIBRARY_PATH})
 
 # Source files
 file(GLOB_RECURSE SOURCES
@@ -48,7 +47,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 # Link dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC
     Threads::Threads
-    ${TBB_STATIC_LIB}
 )
 
 # Testing
