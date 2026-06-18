@@ -1,8 +1,6 @@
 #ifndef RINGBUFFER_H
 #define RINGBUFFER_H
 
-#pragma once
-
 #include <math.h>
 #include <string>
 

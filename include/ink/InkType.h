@@ -1,12 +1,10 @@
 #ifndef INKTYPE_H
 #define INKTYPE_H
 
-#pragma once
-
-#include "ink/ink_base.hpp"
 #include <string>
 #include <variant>
-#include <cstring>
+
+#include "ink/ink_base.hpp"
 
 namespace ink {
 

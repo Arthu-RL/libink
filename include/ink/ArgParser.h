@@ -1,8 +1,6 @@
 #ifndef ARGPARSER_H
 #define ARGPARSER_H
 
-#pragma once
-
 #include <string>
 #include <unordered_map>
 

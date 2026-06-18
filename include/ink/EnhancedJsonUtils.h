@@ -1,8 +1,6 @@
 #ifndef ENHANCEDJSONUTILS_H
 #define ENHANCEDJSONUTILS_H
 
-#pragma once
-
 #include <string>
 #include <vector>
 

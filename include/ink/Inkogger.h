@@ -1,16 +1,16 @@
 #ifndef INKOGGER_H
 #define INKOGGER_H
 
-#pragma once
-
-#include <string>
-#include <sstream>
-#include <fstream>
-#include <mutex>
 #include <array>
-#include <unordered_map>
-#include <memory>
 #include <atomic>
+#include <fstream>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 #include "ink/ink_base.hpp"
 
@@ -36,33 +36,31 @@ enum class LogLevel {
 };
 
 struct LevelMetadata {
-    constexpr LevelMetadata(const char* _color, const char* _desc) :
-        color(_color), desc(_desc)
-    {
-        // Empty
-    }
-    const char* color;
-    const char* desc;
+    constexpr LevelMetadata(std::string_view _color, std::string_view _desc) :
+        color(_color), desc(_desc) {}
+
+    std::string_view color;
+    std::string_view desc;
 };
 
 // ANSI color codes for terminal output
 struct LoggerColors {
-    static constexpr const char* RESET   = "\033[0m";
-    static constexpr const char* BLACK   = "\033[30m";
-    static constexpr const char* RED     = "\033[31m";
-    static constexpr const char* GREEN   = "\033[32m";
-    static constexpr const char* YELLOW  = "\033[33m";
-    static constexpr const char* BLUE    = "\033[34m";
-    static constexpr const char* MAGENTA = "\033[35m";
-    static constexpr const char* CYAN    = "\033[36m";
-    static constexpr const char* DARK_GRAY = "\033[90;1m";
-    static constexpr const char* WHITE   = "\033[37m";
-    static constexpr const char* BOLD_RED    = "\033[31;1m";
-    static constexpr const char* BOLD    = "\033[1m";
-    static constexpr const char* UNDERLINE = "\033[4m";
+    static constexpr std::string_view RESET     = "\033[0m";
+    static constexpr std::string_view BLACK     = "\033[30m";
+    static constexpr std::string_view RED       = "\033[31m";
+    static constexpr std::string_view GREEN     = "\033[32m";
+    static constexpr std::string_view YELLOW    = "\033[33m";
+    static constexpr std::string_view BLUE      = "\033[34m";
+    static constexpr std::string_view MAGENTA   = "\033[35m";
+    static constexpr std::string_view CYAN      = "\033[36m";
+    static constexpr std::string_view DARK_GRAY = "\033[90;1m";
+    static constexpr std::string_view WHITE     = "\033[37m";
+    static constexpr std::string_view BOLD_RED  = "\033[31;1m";
+    static constexpr std::string_view BOLD      = "\033[1m";
+    static constexpr std::string_view UNDERLINE = "\033[4m";
 };
 
-static constexpr std::array<LevelMetadata, static_cast<size_t>(LogLevel::COUNT)> MAP_COLORS_FOR_LEVEL = {{
+static constexpr std::array<LevelMetadata, std::to_underlying(LogLevel::COUNT)> MAP_COLORS_FOR_LEVEL = {{
     LevelMetadata("", "OFF"),
     LevelMetadata(LoggerColors::BOLD_RED, "FATAL"),
     LevelMetadata(LoggerColors::RED, "ERROR"),
@@ -73,25 +71,17 @@ static constexpr std::array<LevelMetadata, static_cast<size_t>(LogLevel::COUNT)>
     LevelMetadata(LoggerColors::CYAN, "TRACE")
 }};
 
-// Abstract base interface for all loggers
+// Abstract base interface
 class INK_API IInkogger {
 public:
-    struct LogMessage {
-        LogLevel level;
-        std::string message;
-        std::string timestamp;
-        std::string file;
-        u32 line;
-    };
-
     virtual ~IInkogger() = default;
 
     virtual void setName(const std::string& name) = 0;
-    virtual std::string getName() const = 0;
+    virtual const std::string& getName() const = 0;
     virtual void setLevel(LogLevel level) = 0;
     virtual LogLevel getLevel() const = 0;
     virtual bool isEnabled(LogLevel level) const = 0;
-    virtual void log(LogLevel level, const std::string& message, const char* file = nullptr, u32 line = 0) = 0;
+    virtual void log(LogLevel level, std::string_view message, const char* file = nullptr, u32 line = 0) = 0;
     virtual void setLogToFile(const std::string& filepath) = 0;
     virtual void setUseColors(bool useColors) = 0;
 };
@@ -102,28 +92,30 @@ public:
     virtual ~Inkogger();
 
     void setName(const std::string& name) override;
-    std::string getName() const override { return m_Name; }
+    const std::string& getName() const override { return m_Name; }
     void setLevel(LogLevel level) override;
-    LogLevel getLevel() const override { return m_Level; }
+    LogLevel getLevel() const override { return m_Level.load(std::memory_order_relaxed); }
     bool isEnabled(LogLevel level) const override;
-    void log(LogLevel level, const std::string& message, const char* file = nullptr, u32 line = 0) override;
-    std::string getColorForLevel(LogLevel level) const;
-    std::string getLevelString(LogLevel level) const;
+    void log(LogLevel level, std::string_view message, const char* file = nullptr, u32 line = 0) override;
+
+    std::string_view getColorForLevel(LogLevel level) const;
+    std::string_view getLevelString(LogLevel level) const;
     void setLogToFile(const std::string& filepath) override;
     void setUseColors(bool useColors) override;
 
 protected:
-    std::string getCurrentTimestamp() const;
-    std::string extractFilename(const char* path) const;
+    void appendCurrentTimestamp(std::string& buffer) const;
+    std::string_view extractFilename(const char* path) const;
 
     std::string m_Name;
     std::atomic<LogLevel> m_Level;
     std::atomic<bool> m_UseColors;
-    std::mutex m_Mutex;
-    std::ofstream m_FileStream;
     std::atomic<bool> m_LogToFile;
 
-    // Thread-local buffer for message formatting
+    std::mutex m_Mutex;
+    std::ofstream m_FileStream;
+
+    // Thread-local buffer to eliminate memory allocations during formatting
     static thread_local std::string t_MessageBuffer;
 };
 
@@ -131,19 +123,18 @@ protected:
 class INK_API LogStream {
 public:
     LogStream(std::shared_ptr<IInkogger> logger, LogLevel level, const char* file = nullptr, u32 line = 0)
-        : m_Logger(logger), m_Level(level), m_File(file), m_Line(line) {}
+        : m_Logger(std::move(logger)), m_Level(level), m_File(file), m_Line(line) {}
 
     ~LogStream() {
         if (m_Logger) {
-            m_Logger->log(m_Level, m_Stream.str(), m_File, m_Line);
+            // Extract string_view and pass it down
+            m_Logger->log(m_Level, m_Stream.view(), m_File, m_Line);
         }
     }
 
     template<typename T>
     LogStream& operator<<(const T& value) {
-        if (m_Logger && m_Logger->isEnabled(m_Level)) {
-            m_Stream << value;
-        }
+        m_Stream << value;
         return *this;
     }
 
@@ -155,8 +146,13 @@ private:
     u32 m_Line;
 };
 
+// Voidify idiom to prevent dangling elses in macros
+struct LogVoidify {
+    void operator&(const LogStream&) {}
+};
+
 // Global logger manager
-class LogManager {
+class INK_API LogManager {
 public:
     static LogManager& getInstance() {
         static LogManager instance;
@@ -164,7 +160,8 @@ public:
     }
 
     std::shared_ptr<IInkogger> getLogger(const std::string& name);
-    std::shared_ptr<IInkogger> registerLogger(const std::string& name, std::shared_ptr<IInkogger> logger);
+    std::shared_ptr<IInkogger> getCoreLogger(); // Highly cached fast access
+
     void setGlobalLevel(LogLevel level);
     void setLogToFile(const std::string& filepath);
     void setUseColors(bool useColors);
@@ -172,46 +169,42 @@ public:
 private:
     LogManager();
     ~LogManager() = default;
+
     std::mutex m_Mutex;
     std::unordered_map<std::string, std::shared_ptr<IInkogger>> m_Loggers;
+    std::shared_ptr<IInkogger> m_CoreLoggerCache;
+
     LogLevel m_GlobalLevel = LogLevel::INFO;
     std::string m_GlobalFilePath;
     bool m_GlobalUseColors = true;
 };
 
-}
+} // namespace ink
 
-// Define a core logger for global access
-#define INK_CORE_LOGGER ink::LogManager::getInstance().getLogger("INK")
+#define INK_CORE_LOGGER ink::LogManager::getInstance().getCoreLogger()
 
-// Convenience macros that use the core logger
 #ifdef INK_DISABLE_LOGGING
 #define INK_TRACE ((void)0)
-#define INK_VERBOSE ((void)0)
-#define INK_DEBUG ((void)0)
-#define INK_INFO  ((void)0)
-#define INK_WARN  ((void)0)
-#define INK_ERROR ((void)0)
-#define INK_FATAL ((void)0)
-#define INK_LOG ((void)0)
+// ... disable all
 #else
-#define INK_LOG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::OFF)
-#define INK_TRACE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::TRACE, __FILE__, __LINE__)
-#define INK_VERBOSE ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
-#define INK_DEBUG ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::DEBUG, __FILE__, __LINE__)
-#define INK_INFO ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::INFO, __FILE__, __LINE__)
-#define INK_WARN ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::WARN, __FILE__, __LINE__)
-#define INK_ERROR ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::ERROR, __FILE__, __LINE__)
-#define INK_FATAL ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::FATAL, __FILE__, __LINE__)
+#define INK_LOG !(INK_CORE_LOGGER)->isEnabled(ink::LogLevel::OFF) ? (void)0 : ink::LogVoidify() & ink::LogStream(INK_CORE_LOGGER, ink::LogLevel::OFF)
 
-#define INKL_TRACE(logger) ink::LogStream(logger, ink::LogLevel::TRACE, __FILE__, __LINE__)
-#define INKL_VERBOSE(logger) ink::LogStream(logger, ink::LogLevel::VERBOSE, __FILE__, __LINE__)
-#define INKL_DEBUG(logger) ink::LogStream(logger, ink::LogLevel::DEBUG, __FILE__, __LINE__)
-#define INKL_INFO(logger) ink::LogStream(logger, ink::LogLevel::INFO, __FILE__, __LINE__)
-#define INKL_WARN(logger) ink::LogStream(logger, ink::LogLevel::WARN, __FILE__, __LINE__)
-#define INKL_ERROR(logger) ink::LogStream(logger, ink::LogLevel::ERROR, __FILE__, __LINE__)
-#define INKL_FATAL(logger) ink::LogStream(logger, ink::LogLevel::FATAL, __FILE__, __LINE__)
+#define INKL_TRACE(logger) !(logger)->isEnabled(ink::LogLevel::TRACE) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::TRACE, __FILE__, __LINE__)
+#define INKL_VERBOSE(logger) !(logger)->isEnabled(ink::LogLevel::VERBOSE) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::VERBOSE, __FILE__, __LINE__)
+#define INKL_DEBUG(logger) !(logger)->isEnabled(ink::LogLevel::DEBUG) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::DEBUG, __FILE__, __LINE__)
+#define INKL_INFO(logger) !(logger)->isEnabled(ink::LogLevel::INFO) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::INFO, __FILE__, __LINE__)
+#define INKL_WARN(logger) !(logger)->isEnabled(ink::LogLevel::WARN) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::WARN, __FILE__, __LINE__)
+#define INKL_ERROR(logger) !(logger)->isEnabled(ink::LogLevel::ERROR) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::ERROR, __FILE__, __LINE__)
+#define INKL_FATAL(logger) !(logger)->isEnabled(ink::LogLevel::FATAL) ? (void)0 : ink::LogVoidify() & ink::LogStream((logger), ink::LogLevel::FATAL, __FILE__, __LINE__)
 
+// Core logger bindings
+#define INK_TRACE INKL_TRACE(INK_CORE_LOGGER)
+#define INK_VERBOSE INKL_VERBOSE(INK_CORE_LOGGER)
+#define INK_DEBUG INKL_DEBUG(INK_CORE_LOGGER)
+#define INK_INFO  INKL_INFO(INK_CORE_LOGGER)
+#define INK_WARN  INKL_WARN(INK_CORE_LOGGER)
+#define INK_ERROR INKL_ERROR(INK_CORE_LOGGER)
+#define INK_FATAL INKL_FATAL(INK_CORE_LOGGER)
 #endif
 
 #endif // INKOGGER_H

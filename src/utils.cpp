@@ -9,11 +9,11 @@ namespace utils {
 
 constexpr usize MAX_CHUNKS = 4096;
 
-std::string exec_command(const std::string& cmd)
+std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
 {
     FILE* pipe = popen(cmd.data(), "r");
     if (!pipe) {
-        return "ERROR: PIPE_FAILED";
+        return std::unexpected(ink_result_t::ERROR_IO);
     }
 
     std::string result;
@@ -39,11 +39,13 @@ i32 cto_int(char c) noexcept
     return -1;
 }
 
-usize string_int(std::string_view s) noexcept
+std::expected<usize, ink_result_t> string_int(std::string_view s) noexcept
 {
-    // Use fast string-to-int conversion avoiding exceptions from std::stoul
-    size_t result = -1;
-    std::from_chars(s.data(), s.data()+s.size(), result);
+    usize result = 0;
+    const auto parsed = std::from_chars(s.data(), s.data() + s.size(), result);
+    if (parsed.ec != std::errc{}) {
+        return std::unexpected(ink_result_t::ERROR_INVALID_PARAM);
+    }
     return result;
 }
 

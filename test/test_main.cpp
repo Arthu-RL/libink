@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     INK_ASSERT(1==1);
     INK_ASSERT_MSG(1==1, "TEST");
 
-    INK_LOG << ink::utils::exec_command("nvidia-smi");
+    INK_LOG << ink::utils::exec_command("nvidia-smi").value_or("ERROR: command failed");
 
     // Submit tasks to the thread pool
     runtime([&](){

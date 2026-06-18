@@ -9,9 +9,7 @@ WorkerThread::WorkerThread(Policy policy, size_t timeoutSecs) :
     _isProcessing(false),
     _requestProcessing(false),
     _policy(policy),
-    _timeoutMs(timeoutSecs * 1000),
-    _onStartCallback(nullptr),
-    _onDestructionCallback(nullptr)
+    _timeoutMs(timeoutSecs * 1000)
 {
 }
 
@@ -72,12 +70,12 @@ void WorkerThread::wake()
 
 void WorkerThread::setOnStartAction(WTCallback onStartCallback) noexcept
 {
-    _onStartCallback = onStartCallback;
+    _onStartCallback = std::move(onStartCallback);
 }
 
 void WorkerThread::setOnDestructionAction(WTCallback onDestructionCallback) noexcept
 {
-    _onDestructionCallback = onDestructionCallback;
+    _onDestructionCallback = std::move(onDestructionCallback);
 }
 
 void WorkerThread::_process()

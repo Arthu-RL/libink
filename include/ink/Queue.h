@@ -1,13 +1,12 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#pragma once
-
 #include <mutex>
 #include <condition_variable>
 #include <queue>
 #include <atomic>
 #include <optional>
+#include <iterator>
 
 #include "ink/ink_base.hpp"
 

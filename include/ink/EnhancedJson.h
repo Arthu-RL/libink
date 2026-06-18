@@ -1,8 +1,6 @@
 #ifndef ENHANCED_JSON_H
 #define ENHANCED_JSON_H
 
-#pragma once
-
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
@@ -194,7 +192,7 @@ public:
      * @param predicate Function that takes EnhancedJson and returns bool
      * @return New EnhancedJson array with filtered elements
      */
-    EnhancedJson filter(std::function<bool(const EnhancedJson&)> predicate) const {
+    EnhancedJson filter(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
         EnhancedJson result = array();
 
         if (!is_array()) {
@@ -217,7 +215,7 @@ public:
      * @return New EnhancedJson array with transformed elements
      */
     template<typename T>
-    EnhancedJson map(std::function<T(const EnhancedJson&)> transform) const {
+    EnhancedJson map(std::move_only_function<T(const EnhancedJson&)> transform) const {
         EnhancedJson result = array();
 
         if (!is_array()) {
@@ -239,7 +237,7 @@ public:
      * @return Reduced value
      */
     template<typename T>
-    T reduce(T initial, std::function<T(T, const EnhancedJson&)> reducer) const {
+    T reduce(T initial, std::move_only_function<T(T, const EnhancedJson&)> reducer) const {
         T result = initial;
 
         if (!is_array()) {
@@ -259,7 +257,7 @@ public:
      * @param predicate Function that tests elements
      * @return First matching element or null
      */
-    EnhancedJson find(std::function<bool(const EnhancedJson&)> predicate) const {
+    EnhancedJson find(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
         if (!is_array()) {
             return EnhancedJson(nullptr);
         }
@@ -279,8 +277,8 @@ public:
      * @param predicate Function that tests elements
      * @return Array of matching elements
      */
-    EnhancedJson findAll(std::function<bool(const EnhancedJson&)> predicate) const {
-        return filter(predicate);
+    EnhancedJson findAll(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
+        return filter(std::move(predicate));
     }
 
     /**
@@ -288,7 +286,7 @@ public:
      * @param predicate Function that tests elements
      * @return True if any element matches, false otherwise
      */
-    bool any(std::function<bool(const EnhancedJson&)> predicate) const {
+    bool any(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
         if (!is_array()) {
             return false;
         }
@@ -308,7 +306,7 @@ public:
      * @param predicate Function that tests elements
      * @return True if all elements match, false otherwise
      */
-    bool all(std::function<bool(const EnhancedJson&)> predicate) const {
+    bool all(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
         if (!is_array() || empty()) {
             return false;
         }
@@ -576,8 +574,8 @@ public:
      * @param predicate Function to test elements
      * @return New query with filtered target
      */
-    JsonQuery filter(std::function<bool(const EnhancedJson&)> predicate) const {
-        EnhancedJson filtered = m_target.filter(predicate);
+    JsonQuery filter(std::move_only_function<bool(const EnhancedJson&)> predicate) const {
+        EnhancedJson filtered = m_target.filter(std::move(predicate));
         return JsonQuery(m_root, filtered);
     }
 
