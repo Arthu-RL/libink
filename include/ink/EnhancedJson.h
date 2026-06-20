@@ -343,28 +343,44 @@ public:
      * @param overwrite Whether to overwrite existing values
      * @return Reference to this object
      */
-    EnhancedJson& merge(const EnhancedJson& other, bool overwrite = true) {
-        if (!is_object() || !other.is_object()) {
-            return *this;
+    void merge(EnhancedJson other, bool overwrite = true) {
+        if (!is_object() || !other.is_object())
+        {
+            return;
         }
 
-        for (auto it = other.begin(); it != other.end(); ++it) {
-            const std::string& key = it.key();
+        std::vector<std::pair<nlohmann::json*, nlohmann::json*>> stack;
+        stack.reserve(32);
+        stack.push_back({this, &other});
 
-            // If key exists in this object and both values are objects, recursively merge
-            if (contains(key) && at(key).is_object() && it.value().is_object()) {
-                EnhancedJson thisValue = EnhancedJson(at(key));
-                EnhancedJson otherValue = EnhancedJson(it.value());
-                thisValue.merge(otherValue, overwrite);
-                (*this)[key] = thisValue;
-            }
-            // Otherwise, copy the value if it doesn't exist or overwrite is true
-            else if (!contains(key) || overwrite) {
-                (*this)[key] = it.value();
+        while (!stack.empty())
+        {
+            auto [target, source] = stack.back();
+            stack.pop_back();
+
+            for (auto&& [key, value] : source->items())
+            {
+                auto targetIt = target->find(key);
+
+                if (targetIt != target->end())
+                {
+                    auto& targetValue = *targetIt;
+
+                    if (targetValue.is_object() && value.is_object())
+                    {
+                        stack.push_back({&targetValue, &value});
+                    }
+                    else if (overwrite)
+                    {
+                        targetValue = std::move(value);
+                    }
+                }
+                else
+                {
+                    (*target)[key] = std::move(value);
+                }
             }
         }
-
-        return *this;
     }
 
     /**
