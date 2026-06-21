@@ -35,12 +35,3 @@
 #define INK_PATCH_VERSION 0
 #define INK_VERSION ((INK_MAJOR_VERSION * 10000) + (INK_MINOR_VERSION * 100) + INK_PATCH_VERSION)
 #define INK_VERSION_STRING_FULL INK_STR(INK_MAJOR_VERSION) "." INK_STR(INK_MINOR_VERSION) "." INK_STR(INK_PATCH_VERSION)
-
-/*====================
- * INK DEFS
- *====================*/
-#define INK_CHECK_RESULT(result_code, msg)     \
-if (result_code != static_cast<i32>(ink_result_t::SUCCESS)) \
-    throw ink::InkException(result_code, msg)
-
-#endif
