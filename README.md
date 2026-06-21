@@ -19,7 +19,7 @@ INK (Implementations Notorious Kit) is a C++ library designed to provide a wide 
 For Linux: 
 
 ```sh
-git clone https://github.com/Arthu-RL/ink.git
+git clone https://github.com/Arthu-RL/libink.git
 
 export LOCAL_PREFIX=/usr/local
 
