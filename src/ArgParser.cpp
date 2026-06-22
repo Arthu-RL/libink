@@ -1,7 +1,10 @@
 #include "../include/ink/ArgParser.h"
 
+#include <format>
+#include <stdexcept>
+
+#include "../include/ink/InkAssert.h"
 #include "../include/ink/Inkogger.h"
-#include "../include/ink/InkException.h"
 
 namespace ink {
 
@@ -28,8 +31,8 @@ void ArgParser::add_argument(const std::string& short_id,
                              const std::string& default_value,
                              const bool required)
 {
-    INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
-    INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
+    INK_ASSERT_MSG(long_id.contains(desc), "Invalid argument added!");
+    INK_ASSERT_MSG(!_added_args.contains(desc), std::format("Cannot add same argument {}.", desc));
     _added_args[desc] = {short_id, long_id, help, default_value, required};
 }
 
@@ -39,8 +42,8 @@ void ArgParser::add_argument(const std::string& long_id,
                              const std::string& default_value,
                              const bool required)
 {
-    INK_THROW_IF(long_id.find(desc) == std::string::npos, "Invalid argument added!");
-    INK_THROW_IF(_added_args.find(desc) != _added_args.end(), "Cannot add same argument "+desc+".");
+    INK_ASSERT_MSG(long_id.contains(desc), "Invalid argument added!");
+    INK_ASSERT_MSG(!_added_args.contains(desc), std::format("Cannot add same argument {}.", desc));
     _added_args[desc] = {"", long_id, help, default_value, required};
 }
 
@@ -128,16 +131,17 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
     // handle missing required args
     if (!lacking.empty())
     {
-        std::string error_msg = "Missing required arguments: ";
+        std::string joined;
         for (size_t i = 0; i < lacking.size(); ++i) {
             if (i > 0) {
-                error_msg += ", ";
+                joined += ", ";
             }
-            error_msg += lacking[i];
+            joined += lacking[i];
         }
+        const std::string error_msg = std::format("Missing required arguments: {}", joined);
 
         show_help();
-        throw INKException(error_msg);
+        throw std::runtime_error(error_msg);
     }
 
     return parsed_args;
@@ -155,8 +159,9 @@ void ArgParser::show_help()
         arg_line += arg.long_id;
 
         std::string status = arg.required ? "Required" : "Optional";
-        if (!arg.default_value.empty() && !arg.required)
-            status += " (Default: " + arg.default_value + ")";
+        if (!arg.default_value.empty() && !arg.required) {
+            status += std::format(" (Default: {})", arg.default_value);
+        }
 
         INK_LOG << arg_line;
         INK_LOG << "    " << status << " " << arg.help;

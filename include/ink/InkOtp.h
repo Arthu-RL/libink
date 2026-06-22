@@ -1,8 +1,6 @@
 #ifndef INKOTP_H
 #define INKOTP_H
 
-#pragma once
-
 #include <string>
 
 namespace ink {

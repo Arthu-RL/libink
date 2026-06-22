@@ -1,9 +1,6 @@
 #ifndef INKEDLIST_H
 #define INKEDLIST_H
 
-
-#pragma once
-
 #include <algorithm>
 
 #include "ink/ink_base.hpp"

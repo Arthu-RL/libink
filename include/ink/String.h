@@ -1,8 +1,6 @@
 #ifndef STRING_H
 #define STRING_H
 
-#pragma once
-
 #include <ostream>
 #include <cstddef>
 #include <cstring>

@@ -1,8 +1,6 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
-#pragma once
-
 #include <vector>
 #include <queue>
 #include <thread>
@@ -47,7 +45,7 @@ public:
 
 private:
     std::vector<std::thread> _workers;
-    std::queue<std::function<void()>> _tasks;
+    std::queue<std::move_only_function<void()>> _tasks;
 
     std::mutex _tpMutex;
     std::condition_variable _condition;

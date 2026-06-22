@@ -35,7 +35,7 @@ public:
         }
     }
 
-    T* acquire(bool *expanded = nullptr) {
+    [[nodiscard]] T* acquire(bool *expanded = nullptr) {
         if (_freeList.empty()) {
             _currentCapacity *= 2;
             expand(_currentCapacity);

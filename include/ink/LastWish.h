@@ -1,8 +1,6 @@
 #ifndef LASTWISH_H
 #define LASTWISH_H
 
-#pragma once
-
 #include <functional>
 
 #include "ink/ink_base.hpp"
@@ -30,7 +28,7 @@ public:
      * @param start The function to execute upon construction.
      * @param lastWish The function to execute upon destruction.
      */
-    LastWish(std::function<void ()> start, std::function<void ()> lastWish) : _lastWish(lastWish)
+    LastWish(std::move_only_function<void()> start, std::move_only_function<void()> lastWish) : _lastWish(std::move(lastWish))
     {
         start();
     }
@@ -52,7 +50,7 @@ private:
      *
      * This function is executed when the object is destroyed (in the destructor).
      */
-    std::function<void ()> _lastWish;
+    std::move_only_function<void()> _lastWish;
 };
 
 }

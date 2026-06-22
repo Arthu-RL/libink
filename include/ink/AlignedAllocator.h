@@ -7,6 +7,8 @@
 #include <limits>
 #include <type_traits>
 
+#include "ink/ink_base.hpp"
+
 namespace ink {
 
 template<typename T, std::size_t Alignment = 32>
@@ -67,18 +69,6 @@ public:
 #else
         std::free(p);
 #endif
-    }
-
-    template<class U, class... Args>
-    void construct(U* p, Args&&... args)
-    {
-        ::new ((void*)p) U(std::forward<Args>(args)...);
-    }
-
-    template<class U>
-    void destroy(U* p)
-    {
-        p->~U();
     }
 
     // cmp

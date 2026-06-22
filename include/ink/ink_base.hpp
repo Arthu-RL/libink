@@ -8,8 +8,6 @@
  * This file contains common macros and basic definitions needed by all INK components.
  */
 
-#pragma once
-
 /*====================
  * Good Macros
  *====================*/
@@ -23,16 +21,16 @@
 
 #define LOCATION __FILE__ ":" INK_STR(__LINE__)
 
-// Compile-time assertions
-#define STATIC_ASSERT(cond, msg) typedef char static_assertion_##msg[(cond) ? 1 : -1]
+// Compile-time assertions (prefer static_assert directly in new code)
+#define STATIC_ASSERT(cond, msg) static_assert(cond, #msg)
 
 /*====================
  * C++ VERSION CHECK
  *====================*/
 #ifndef __cplusplus
 #error "INK requires a C++ compiler"
-#elif __cplusplus < 201703L
-#error "INK requires C++17 or later"
+#elif __cplusplus < 202100L
+#error "INK requires C++23 or later (compile with -std=c++23)"
 #endif
 
 /*====================

@@ -1,16 +1,13 @@
 #ifndef WORKERTHREAD_H
 #define WORKERTHREAD_H
 
-#pragma once
-
 #include <functional>
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
 
-// Assuming ink_base.hpp defines INK_API
-#include "ink_base.hpp"
+#include "ink/ink_base.hpp"
 
 namespace ink {
 
@@ -26,7 +23,7 @@ public:
     WorkerThread(Policy policy, size_t timeoutSecs);
     virtual ~WorkerThread();
 
-    typedef std::function<void()> WTCallback;
+    typedef std::move_only_function<void()> WTCallback;
 
     void start();
     void stop();

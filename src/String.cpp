@@ -1,7 +1,8 @@
 #include "../include/ink/String.h"
-#include <iostream>
+#include <format>
 #include <cstring>
 #include <cctype>
+#include <cstdio>
 
 namespace ink {
 
@@ -274,12 +275,8 @@ bool String::empty() const noexcept
 
 void String::display() const
 {
-    std::cout << c_str()
-    << ": length=" << length()
-    << ", capacity=" << capacity()
-    << ", using " << (_data->is_small ? "stack" : "heap")
-    << ", sso_capacity=" << _data->sso_capacity
-    << std::endl;
+    std::fputs(std::format("{0}: length={1}, capacity={2}, using {3}, sso_capacity={4}\n",
+        c_str(), length(), capacity(), _data->is_small ? "stack" : "heap", _data->sso_capacity).c_str(), stdout);
 }
 
 std::ostream &operator<<(std::ostream &os, const String &obj)
