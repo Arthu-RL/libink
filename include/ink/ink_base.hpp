@@ -123,6 +123,7 @@
 /*====================
  * TYPE DEFINITIONS
  *====================*/
+#include <cstddef>
 #include <cstring>
 
 using i8 = signed char;
