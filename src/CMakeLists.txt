@@ -22,7 +22,11 @@ target_include_directories(ink PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries(ink PUBLIC Threads::Threads)
+target_link_libraries(ink
+    PUBLIC
+        Threads::Threads
+        nlohmann_json::nlohmann_json
+)
 
 # Compile options
 target_compile_options(ink PRIVATE
