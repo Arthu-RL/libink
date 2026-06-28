@@ -10,30 +10,29 @@
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
-
     {
       "name": "linux",
       "inherits": "base",
       "binaryDir": "${sourceDir}/build/linux"
     },
-
     {
       "name": "android",
       "inherits": "base",
       "binaryDir": "${sourceDir}/build/android",
-      "toolchainFile": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
       "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake",
         "ANDROID_ABI": "arm64-v8a",
         "ANDROID_PLATFORM": "android-29",
         "ANDROID_STL": "c++_static"
       }
     },
-
     {
       "name": "wasm",
       "inherits": "base",
       "binaryDir": "${sourceDir}/build/wasm",
-      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      }
     }
   ],
 
