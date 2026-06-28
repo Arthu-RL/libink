@@ -25,7 +25,7 @@ add_subdirectory(src)
 
 if(INK_BUILD_TESTS)
     include(CTest)
-    add_subdirectory(tests)
+    add_subdirectory(test)
 endif()
 
 include(cmake/Install.cmake)
