@@ -10,7 +10,7 @@ ThreadPool::ThreadPool(size_t max_workers) :
         _workers.emplace_back([this] {
             while (true)
             {
-                std::move_only_function<void()> task;
+                ink::move_only_function<void()> task;
                 {
                     std::unique_lock<std::mutex> lock(_tpMutex);
                     _condition.wait(lock, [this]{ return _stop || !_tasks.empty(); });

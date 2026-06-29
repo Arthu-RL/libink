@@ -23,7 +23,7 @@ public:
     WorkerThread(Policy policy, size_t timeoutSecs);
     virtual ~WorkerThread();
 
-    typedef std::move_only_function<void()> WTCallback;
+    typedef ink::move_only_function<void()> WTCallback;
 
     void start();
     void stop();

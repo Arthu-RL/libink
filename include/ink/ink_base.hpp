@@ -51,6 +51,8 @@
 #define INK_PLATFORM_WINDOWS 1
 #elif defined(__APPLE__) && defined(__MACH__)
 #define INK_PLATFORM_APPLE 1
+#elif defined(__ANDROID__)
+#define INK_PLATFORM_ANDROID 1
 #elif defined(__linux__)
 #define INK_PLATFORM_LINUX 1
 #elif defined(__unix__)
@@ -153,6 +155,18 @@ enum ink_result_t : i32 {
     ERROR_NOT_SUPPORTED = -5,
     ERROR_IO = -6
 };
+
+#include <functional>
+
+namespace ink {
+#if defined(__cpp_lib_move_only_function)
+    template <typename Sig>
+    using move_only_function = std::move_only_function<Sig>;
+#else
+    template <typename Sig>
+    using move_only_function = std::function<Sig>;
+#endif
+}
 
 /*====================
  * UTILITY MACROS
