@@ -1,4 +1,3 @@
-#include <iostream>
 #include <chrono>
 
 #include "../include/ink/ink.hpp"
@@ -12,14 +11,10 @@ void runtime(std::function<void()>&& f) {
 
     std::chrono::duration<double, std::milli> duration = end - start;
 
-    std::cout << duration.count() << " ms" << '\n';
+    INK_LOG << "Runtime duration: " << duration.count() << " ms";
 }
 
 int add(int a, int b) {
-    for (;;)
-    {
-
-    }
     // std::this_thread::sleep_for(std::chrono::seconds(2));
     return a + b;
 }
@@ -80,8 +75,6 @@ int main(int argc, char** argv) {
     TestWorkerThread worker(ink::WorkerThread::Policy::WaitProcessFinish, 1);
 
     worker.start();
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     worker.stop();
 

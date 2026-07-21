@@ -39,7 +39,7 @@ public:
     EnhancedJson(const nlohmann::json& other) : nlohmann::json(other) {}
 
     // Doesn't work, nlohmann::json only accepts strings, and converts the type when you use T get<T> function
-    EnhancedJson(const InkType& inkType) {
+    explicit EnhancedJson(const InkType& inkType) {
         auto variant = inkType.toVariant();
 
         std::visit([this](auto&& value) {
@@ -640,6 +640,25 @@ private:
 INK_INLINE JsonQuery EnhancedJson::query(const std::string& path) const {
     return JsonQuery(this, path);
 }
+
+/**
+ * @brief Direct implicit conversion between nlohmann::json and derived EnhancedJson.
+ * * It is done to allow smooth integration with nlohmann::json's template.
+ * Because the base library uses strict C++ type traits (like is_basic_json) to resolve
+ * types, it fails to automatically recognize derived classes when used inside
+ * std::initializer_list constructors or complex assignments. This ADL
+ * (Argument-Dependent Lookup) hook explicitly tells the compiler how to safely
+ * slice the derived object back to its base representation, preventing template
+ * deduction failures.
+ */
+inline void to_json(nlohmann::json& j, const EnhancedJson& e) {
+    j = static_cast<const nlohmann::json&>(e);
+}
+
+inline void from_json(const nlohmann::json& j, EnhancedJson& e) {
+    e = static_cast<EnhancedJson>(j);
+}
+
 
 } // namespace aura3d
 
