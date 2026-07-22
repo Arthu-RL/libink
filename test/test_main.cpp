@@ -250,7 +250,7 @@ int main(int argc, char** argv) {
         const std::string secret_file = "/tmp/secret.txt";
         if (!ink::crypt::OTP::write_to_file(secret_file, key))
         {
-            std::cout << "Failed to write to secret file" << '\n';
+            INK_LOG << "Failed to write to secret file";
             throw std::runtime_error("Tests failed at writing to file");
         }
 
@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Tests failed at encryted/decrypted comparisson");
         }
 
-        std::cout << "message: " << to_encrypt << "\nkey: " << key << "\nEncrypted message: " << encrypted_msg << "\nDecrypted message: " << decrypted_msg << '\n';
+        INK_LOG << "message: " << to_encrypt << "\nkey: " << key << "\nEncrypted message: " << encrypted_msg << "\nDecrypted message: " << decrypted_msg;
 
         return 0;
     });
