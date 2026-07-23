@@ -1,22 +1,21 @@
-# INK Library
+# Ink
 
-### A versatile and efficient collection of utilities and implementations
+A modern C++ utility library: allocators, containers, concurrency, and a handful of other things every project ends up rewriting.
 
-# Overview
+## What's inside
 
-INK (Implementations Notorious Kit) is a C++ library designed to provide a wide range of utilities and implementations for modern software development. It aims to deliver high-performance, flexible, and reusable solutions for common tasks, such as multi-threading, data processing, and more. Whether you're building complex systems or just need a fast, efficient helper for your application, INK has you covered.
-
-# Getting Started
+- **Memory** — `AlignedAllocator`, `ArenaAllocator`, `ObjectPool`
+- **Containers** — `InkedList`, `Queue`, `RingBuffer`, `InkixTree`, `String`
+- **Concurrency** — `ThreadPool`, `WorkerThread`, `TimerWheel`
+- **JSON** — `EnhancedJson` and utilities
+- **Misc** — `ArgParser`, `Inkogger` (logging), `InkOtp`, `InkAssert`, `LastWish`, general `utils`
 
 ## Prerequisites
 
 - C++23 or later
-
 - A modern C++ compiler (GCC, Clang, MSVC, etc.)
 
-# Installation
-
-For Linux: 
+## Installation
 
 ```sh
 git clone https://github.com/Arthu-RL/libink.git
@@ -27,7 +26,7 @@ cmake -S ./libink -B ./libink/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_P
 cmake --build ./libink/build --target install
 ```
 
-# How to use
+## Usage
 
 ```cmake
 find_package(ink REQUIRED)
@@ -38,6 +37,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ink)
 #include <ink/ink.hpp>
 ```
 
-# Acknowledgements
+## Acknowledgements
 
-- This library leverages ideas and algorithms from various open-source projects.
+This library leverages ideas and algorithms from various open-source projects.

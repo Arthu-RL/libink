@@ -28,7 +28,7 @@ public:
      * @param start The function to execute upon construction.
      * @param lastWish The function to execute upon destruction.
      */
-    LastWish(std::move_only_function<void()> start, std::move_only_function<void()> lastWish) : _lastWish(std::move(lastWish))
+    LastWish(ink::move_only_function<void()> start, ink::move_only_function<void()> lastWish) : _lastWish(std::move(lastWish))
     {
         start();
     }
@@ -50,7 +50,7 @@ private:
      *
      * This function is executed when the object is destroyed (in the destructor).
      */
-    std::move_only_function<void()> _lastWish;
+    ink::move_only_function<void()> _lastWish;
 };
 
 }

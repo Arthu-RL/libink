@@ -30,6 +30,8 @@
 
 #if defined(_MSC_VER)
     __debugbreak();
+#elif defined(__EMSCRIPTEN__)
+    __builtin_trap();
 #elif defined(__GNUC__) || defined(__clang__)
 #if defined(__x86_64__) || defined(__i386__)
     __asm__ volatile("int $3");

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <chrono>
 
 #include "../include/ink/ink.hpp"
@@ -12,14 +11,10 @@ void runtime(std::function<void()>&& f) {
 
     std::chrono::duration<double, std::milli> duration = end - start;
 
-    std::cout << duration.count() << " ms" << '\n';
+    INK_LOG << "Runtime duration: " << duration.count() << " ms";
 }
 
 int add(int a, int b) {
-    for (;;)
-    {
-
-    }
     // std::this_thread::sleep_for(std::chrono::seconds(2));
     return a + b;
 }
@@ -80,8 +75,6 @@ int main(int argc, char** argv) {
     TestWorkerThread worker(ink::WorkerThread::Policy::WaitProcessFinish, 1);
 
     worker.start();
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     worker.stop();
 
@@ -257,7 +250,7 @@ int main(int argc, char** argv) {
         const std::string secret_file = "/tmp/secret.txt";
         if (!ink::crypt::OTP::write_to_file(secret_file, key))
         {
-            std::cout << "Failed to write to secret file" << '\n';
+            INK_LOG << "Failed to write to secret file";
             throw std::runtime_error("Tests failed at writing to file");
         }
 
@@ -270,7 +263,7 @@ int main(int argc, char** argv) {
             throw std::runtime_error("Tests failed at encryted/decrypted comparisson");
         }
 
-        std::cout << "message: " << to_encrypt << "\nkey: " << key << "\nEncrypted message: " << encrypted_msg << "\nDecrypted message: " << decrypted_msg << '\n';
+        INK_LOG << "message: " << to_encrypt << "\nkey: " << key << "\nEncrypted message: " << encrypted_msg << "\nDecrypted message: " << decrypted_msg;
 
         return 0;
     });
