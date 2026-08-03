@@ -1,0 +1,224 @@
+name: Release
+
+# Triggered by pushing a version tag, e.g.:
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Builds libink.a (+ public headers + CMake package config) for Linux,
+# Android, and WebAssembly, then attaches one archive per platform to a
+# GitHub Release. These are separate binaries for separate toolchains/ABIs
+# -- there is no single artifact that covers all three. Unlike a
+# dependent project that bundles other static libraries into its own
+# archive, ink has nothing to merge: Threads and nlohmann_json stay
+# external find_dependency() calls in ink-config.cmake, consistent with
+# how the library is meant to be consumed via find_package(ink).
+
+on:
+  push:
+    tags:
+      - "v*"
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract CHANGELOG section
+        # Pulls the "## [X.Y.Z]" ... section up to the next "## [" heading
+        # (or EOF) out of CHANGELOG.md, keyed off the pushed tag (v0.1.0 ->
+        # 0.1.0)
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ ("\\[" ver "\\]")) { found=1; next }
+              next
+            }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+
+          if [[ ! -s release_notes.md ]]; then
+            echo "❌  No CHANGELOG.md section found for version $VERSION" >&2
+            exit 1
+          fi
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file release_notes.md \
+            --draft
+
+  linux-release:
+    name: Package Linux
+    needs: create-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: arthurrl/vulkan-dev:lts
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        # INK_NATIVE_OPTIMIZE defaults ON, which adds -march=native/-mtune=native
+        # to Release builds. That's fine for a local build on your own
+        # machine, but a binary built with it on the CI runner's specific
+        # CPU can SIGILL on a consumer's different CPU, so it must be off
+        # for anything that leaves this runner as a release artifact.
+        run: >
+          cmake -S . -B build/linux/release -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DINK_BUILD_TESTS=OFF
+          -DINK_NATIVE_OPTIMIZE=OFF
+
+      - name: Build
+        run: cmake --build build/linux/release --parallel
+
+      - name: Install
+        run: cmake --install build/linux/release --prefix stage/ink-linux-x86_64
+
+      - name: Package
+        run: |
+          tar -C stage -czf ink-${{ github.ref_name }}-linux-x86_64.tar.gz \
+            ink-linux-x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: ink-${{ github.ref_name }}-linux-x86_64.tar.gz
+          retention-days: 1
+
+  android-release:
+    name: Package Android
+    needs: create-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: arthurrl/vulkan-dev:lts
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        # nlohmann_json is only installed under the native /usr/local prefix
+        # and the platform-specific /usr/local/android prefix in this image,
+        # not under the NDK sysroot itself, and the Android toolchain file
+        # defaults CMAKE_FIND_ROOT_PATH_MODE_PACKAGE to ONLY (searches
+        # restricted to the sysroot), so find_package(nlohmann_json) needs
+        # both the extra prefix and BOTH search mode to succeed.
+        run: >
+          cmake -S . -B build-android
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake
+          -DANDROID_ABI=arm64-v8a
+          -DANDROID_PLATFORM=android-29
+          -DANDROID_STL=c++_shared
+          -DCMAKE_BUILD_TYPE=Release
+          -DINK_BUILD_TESTS=OFF
+          -DCMAKE_PREFIX_PATH="/usr/local/android;/usr/local"
+          -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH
+
+      - name: Build
+        run: cmake --build build-android --parallel
+
+      - name: Install
+        run: cmake --install build-android --prefix stage/ink-android-arm64-v8a
+
+      - name: Package
+        run: |
+          tar -C stage -czf ink-${{ github.ref_name }}-android-arm64-v8a.tar.gz \
+            ink-android-arm64-v8a
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64-v8a
+          path: ink-${{ github.ref_name }}-android-arm64-v8a.tar.gz
+          retention-days: 1
+
+  wasm-release:
+    name: Package WASM
+    needs: create-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: arthurrl/vulkan-dev:lts
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        # Same nlohmann_json reasoning as android-release's Configure step,
+        # for the /usr/local/wasm prefix instead.
+        run: |
+          source /opt/emsdk/emsdk_env.sh
+          emcmake cmake -S . -B build-wasm \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DINK_BUILD_TESTS=OFF \
+            -DCMAKE_PREFIX_PATH="/usr/local/wasm;/usr/local" \
+            -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=BOTH
+
+      - name: Build
+        run: |
+          source /opt/emsdk/emsdk_env.sh
+          cmake --build build-wasm --parallel
+
+      - name: Install
+        run: cmake --install build-wasm --prefix stage/ink-wasm
+
+      - name: Package
+        run: |
+          tar -C stage -czf ink-${{ github.ref_name }}-wasm.tar.gz ink-wasm
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm
+          path: ink-${{ github.ref_name }}-wasm.tar.gz
+          retention-days: 1
+
+  publish-release:
+    name: Publish release
+    needs: [linux-release, android-release, wasm-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload assets and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.ref_name }}" artifacts/*/*.tar.gz \
+            --repo "${{ github.repository }}"
+          gh release edit "${{ github.ref_name }}" --draft=false \
+            --repo "${{ github.repository }}"

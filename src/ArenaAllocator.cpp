@@ -35,7 +35,7 @@ void InkedArena::arena_init(Arena* a, size_t block_size)
 
 void* InkedArena::arena_alloc_hard(Arena* a, size_t size, size_t align)
 {
-    size_t new_size = (size > a->block_size) ? size : a->block_size;
+    size_t new_size = (size > a->block_size) ? (size + align) : a->block_size;
 
     ArenaBlock* new_block = arena_new_block(new_size);
     if (!new_block) return nullptr;

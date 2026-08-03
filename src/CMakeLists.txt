@@ -28,6 +28,12 @@ target_link_libraries(ink
         nlohmann_json::nlohmann_json
 )
 
+# Inkogger routes console output through __android_log_print on Android,
+# which lives in the NDK's liblog.
+if(ANDROID)
+    target_link_libraries(ink PUBLIC log)
+endif()
+
 # Compile options
 target_compile_options(ink PRIVATE
     $<$<CONFIG:Debug>:

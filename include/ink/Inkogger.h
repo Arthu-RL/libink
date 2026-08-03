@@ -21,6 +21,19 @@
 #define INK_DISABLE_LOGGING
 #endif
 
+// On POSIX kernels (Linux, Android) a raw fd opened with O_APPEND 
+// lets the kernel serialize concurrent writes to a regular 
+// file atomically instead, so the per-line write path
+// can be lock-free. Windows has no equivalent guarantee without different
+// (FILE_APPEND_DATA) plumbing, and Emscripten's virtual filesystems don't
+// document the same atomicity across pthread workers, so both fall back to
+// the mutex-guarded ofstream path.
+#if defined(INK_PLATFORM_WINDOWS) || defined(__EMSCRIPTEN__)
+#define INK_LOGGER_USE_OFSTREAM 1
+#else
+#define INK_LOGGER_USE_OFSTREAM 0
+#endif
+
 namespace ink {
 
 enum class LogLevel {
@@ -77,73 +90,105 @@ public:
     virtual ~IInkogger() = default;
 
     virtual void setName(const std::string& name) = 0;
-    virtual const std::string& getName() const = 0;
-    virtual void setLevel(LogLevel level) = 0;
-    virtual LogLevel getLevel() const = 0;
-    virtual bool isEnabled(LogLevel level) const = 0;
+    [[nodiscard]] virtual const std::string& getName() const noexcept = 0;
+    virtual void setLevel(LogLevel level) noexcept = 0;
+    [[nodiscard]] virtual LogLevel getLevel() const noexcept = 0;
+    [[nodiscard]] virtual bool isEnabled(LogLevel level) const noexcept = 0;
     virtual void log(LogLevel level, std::string_view message, const char* file = nullptr, u32 line = 0) = 0;
     virtual void setLogToFile(const std::string& filepath) = 0;
-    virtual void setUseColors(bool useColors) = 0;
+    virtual void setUseColors(bool useColors) noexcept = 0;
 };
 
 class INK_API Inkogger : public IInkogger {
 public:
-    Inkogger(const std::string& name);
-    virtual ~Inkogger();
+    explicit Inkogger(const std::string& name);
+    ~Inkogger() override;
 
     void setName(const std::string& name) override;
-    const std::string& getName() const override { return m_Name; }
-    void setLevel(LogLevel level) override;
-    LogLevel getLevel() const override { return m_Level.load(std::memory_order_relaxed); }
-    bool isEnabled(LogLevel level) const override;
+    [[nodiscard]] const std::string& getName() const noexcept override { return _name; }
+    void setLevel(LogLevel level) noexcept override;
+    [[nodiscard]] LogLevel getLevel() const noexcept override { return _level.load(std::memory_order_relaxed); }
+    [[nodiscard]] bool isEnabled(LogLevel level) const noexcept override;
     void log(LogLevel level, std::string_view message, const char* file = nullptr, u32 line = 0) override;
 
-    std::string_view getColorForLevel(LogLevel level) const;
-    std::string_view getLevelString(LogLevel level) const;
+    [[nodiscard]] std::string_view getColorForLevel(LogLevel level) const noexcept;
+    [[nodiscard]] std::string_view getLevelString(LogLevel level) const noexcept;
     void setLogToFile(const std::string& filepath) override;
-    void setUseColors(bool useColors) override;
+    void setUseColors(bool useColors) noexcept override;
 
 protected:
     void appendCurrentTimestamp(std::string& buffer) const;
-    std::string_view extractFilename(const char* path) const;
+    std::string_view extractFilename(const char* path) const noexcept;
+    void writeToPlatformConsole(LogLevel level, std::string_view plainMessage,
+                                 std::string_view coloredMessage) const;
 
-    std::string m_Name;
-    std::atomic<LogLevel> m_Level;
-    std::atomic<bool> m_UseColors;
-    std::atomic<bool> m_LogToFile;
+    // Opens/repoints the log file. Not intended to be called concurrently
+    // with active logging from other threads (see the note on _fileFd
+    // below
+    bool openLogFile(const std::string& filepath);
+    void closeLogFile();
+    // Writes one already-formatted, newline-terminated line to the log
+    // file. flushNow only affects the ofstream fallback path: the fd path
+    // has no userspace buffering to flush, every write() is already visible
+    // as soon as it returns.
+    void writeToFile(std::string_view data, bool flushNow) const;
 
-    std::mutex m_Mutex;
-    std::ofstream m_FileStream;
+    std::string _name;
+    std::atomic<LogLevel> _level;
+    std::atomic<bool> _useColors;
+    std::atomic<bool> _logToFile;
 
-    // Thread-local buffer to eliminate memory allocations during formatting
+    // Guards file lifecycle transitions only (open/close via
+    // setLogToFile/openLogFile/closeLogFile, and the destructor). The
+    // per-line write path (writeToFile) does not take this lock on POSIX
+    // see _fileFd.
+    mutable std::mutex _mutex;
+#if INK_LOGGER_USE_OFSTREAM
+    mutable std::ofstream _fileStream;
+#else
+    // Raw fd opened O_WRONLY|O_APPEND. The kernel serializes concurrent
+    // write() calls to a regular file opened this way, so multiple logging
+    // threads can write without taking a lock. This does NOT make
+    // reconfiguration (closing/reopening via setLogToFile) safe to run
+    // concurrently with in-flight writes: a write() that already loaded the
+    // old fd value can race with another thread's close() of that same fd
+    // number. setLogToFile() is expected to be called during setup, not
+    // interleaved with hot-path logging from other threads.
+    std::atomic<int> _fileFd{-1};
+#endif
+
+    // Thread-local buffers to eliminate memory allocations during formatting
     static thread_local std::string t_MessageBuffer;
+    // Lazily-populated ANSI-free copy, used for the Android console sink and
+    // for file output when colors are enabled on the primary buffer.
+    static thread_local std::string t_PlainMessageBuffer;
 };
 
 // Stream-style logging class
 class INK_API LogStream {
 public:
     LogStream(std::shared_ptr<IInkogger> logger, LogLevel level, const char* file = nullptr, u32 line = 0)
-        : m_Logger(std::move(logger)), m_Level(level), m_File(file), m_Line(line) {}
+        : _logger(std::move(logger)), _level(level), _file(file), _line(line) {}
 
     ~LogStream() {
-        if (m_Logger) {
+        if (_logger) {
             // Extract string_view and pass it down
-            m_Logger->log(m_Level, m_Stream.view(), m_File, m_Line);
+            _logger->log(_level, _stream.view(), _file, _line);
         }
     }
 
     template<typename T>
     LogStream& operator<<(const T& value) {
-        m_Stream << value;
+        _stream << value;
         return *this;
     }
 
 private:
-    std::shared_ptr<IInkogger> m_Logger;
-    LogLevel m_Level;
-    std::stringstream m_Stream;
-    const char* m_File;
-    u32 m_Line;
+    std::shared_ptr<IInkogger> _logger;
+    LogLevel _level;
+    std::stringstream _stream;
+    const char* _file;
+    u32 _line;
 };
 
 // Voidify idiom to prevent dangling elses in macros
@@ -170,13 +215,18 @@ private:
     LogManager();
     ~LogManager() = default;
 
-    std::mutex m_Mutex;
-    std::unordered_map<std::string, std::shared_ptr<IInkogger>> m_Loggers;
-    std::shared_ptr<IInkogger> m_CoreLoggerCache;
+    std::mutex _mutex;
+    std::unordered_map<std::string, std::shared_ptr<IInkogger>> _loggers;
+    // std::call_once guarantees the write in getCoreLogger()'s slow path
+    // happens-before every fast-path read, without an atomic<shared_ptr>
+    // (unsupported by the Android NDK's libc++ for non-trivially-copyable T)
+    // and without a per-call mutex lock.
+    std::once_flag _coreLoggerOnceFlag;
+    std::shared_ptr<IInkogger> _coreLoggerCache;
 
-    LogLevel m_GlobalLevel = LogLevel::INFO;
-    std::string m_GlobalFilePath;
-    bool m_GlobalUseColors = true;
+    LogLevel _globalLevel = LogLevel::INFO;
+    std::string _globalFilePath;
+    bool _globalUseColors = true;
 };
 
 } // namespace ink

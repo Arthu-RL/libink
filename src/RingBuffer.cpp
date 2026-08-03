@@ -3,18 +3,13 @@
 namespace ink {
 
 RingBuffer::RingBuffer(size_t capacity) :
-    _buffer(new char[capacity]),
+    _buffer(capacity),
     _capacity(capacity),
     _readPos(0),
     _writePos(0),
     _size(0)
 {
     // Empty
-}
-
-RingBuffer::~RingBuffer()
-{
-    delete[] _buffer;
 }
 
 size_t RingBuffer::read(char* dest, size_t maxLen)
@@ -28,11 +23,11 @@ size_t RingBuffer::read(char* dest, size_t maxLen)
     const size_t first = std::min(toRead, tail);
 
     // First chunk
-    memcpy(dest, _buffer + _readPos, first);
+    memcpy(dest, _buffer.data() + _readPos, first);
 
     // Wrap-around chunk
     if (toRead > first)
-        memcpy(dest + first, _buffer, toRead - first);
+        memcpy(dest + first, _buffer.data(), toRead - first);
 
     _readPos += toRead;
     if (_readPos >= _capacity)
@@ -52,11 +47,11 @@ size_t RingBuffer::write(const char* data, size_t len)
     const size_t tail = _capacity - _writePos;
     const size_t first = std::min(toWrite, tail);
 
-    memcpy(_buffer + _writePos, data, first);
+    memcpy(_buffer.data() + _writePos, data, first);
 
      // Wrap-around chunk
     if (toWrite > first)
-        memcpy(_buffer, data + first, toWrite - first);
+        memcpy(_buffer.data(), data + first, toWrite - first);
 
     _writePos += toWrite;
     if (_writePos >= _capacity)
@@ -88,7 +83,7 @@ const char* RingBuffer::getReadBuffer(size_t& availableData) const
     else
         availableData = _capacity - _readPos; // Complex case: read position after write position (wrap-around)
 
-    return _buffer + _readPos;
+    return _buffer.data() + _readPos;
 }
 
 char* RingBuffer::getWriteBuffer(size_t& availableSpace)
@@ -103,7 +98,7 @@ char* RingBuffer::getWriteBuffer(size_t& availableSpace)
     else
         availableSpace = _readPos - _writePos; // Write position before read position
 
-    return _buffer + _writePos;
+    return _buffer.data() + _writePos;
 }
 
 void RingBuffer::advanceReadPos(size_t len)

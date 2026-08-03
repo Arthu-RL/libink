@@ -1,9 +1,13 @@
 #ifndef OBJECTPOOL_H
 #define OBJECTPOOL_H
 
+#include <new>
+#include <utility>
 #include <vector>
 
 #include "ink_base.hpp"
+
+namespace ink {
 
 /**
  * @class ObjectPool
@@ -13,6 +17,12 @@
  *
  * @note Works well with io_uring by providing memory-aligned blocks
  * that can be registered as "Fixed Buffers" with the kernel.
+ *
+ * @note All objects acquired from the pool must be release()'d before the
+ * pool itself is destroyed: the pool only owns raw storage, not object
+ * lifetime, so it has no way to know which slots are still "live" (acquired
+ * but not yet released) at teardown and cannot run their destructors for
+ * them.
  *
  * @tparam T The type of object to be stored in the pool.
  * @tparam iSize The initial number of objects to allocate in the first slab.
@@ -35,19 +45,24 @@ public:
         }
     }
 
-    [[nodiscard]] T* acquire(bool *expanded = nullptr) {
-        if (_freeList.empty()) {
+    // Acquires a free slot and constructs a T in place with the given
+    // constructor arguments. O(1) amortized (occasionally expands the pool).
+    template<typename... Args>
+    [[nodiscard]] T* acquire(Args&&... args) {
+        if (_freeList.empty()) 
+        {
             _currentCapacity *= 2;
             expand(_currentCapacity);
-            if (expanded)
-                *expanded = true;
         }
-        T* obj = _freeList.back();
+        T* slot = _freeList.back();
         _freeList.pop_back();
-        return obj;
+        return ::new (static_cast<void*>(slot)) T(std::forward<Args>(args)...);
     }
 
+    // Destroys obj and returns its storage to the free list. obj must have
+    // been returned by acquire() on this pool and not already released.
     void release(T* obj) {
+        obj->~T();
         _freeList.push_back(obj);
     }
 
@@ -70,7 +85,8 @@ private:
 
         // Push in reverse order so that 'acquire()' pops sequential addresses
         // Insert each T* space of the block
-        for (isize i = count - 1; i >= 0; --i) {
+        for (isize i = count - 1; i >= 0; --i) 
+        {
             _freeList.push_back(&block[i]);
         }
     }
@@ -79,5 +95,7 @@ private:
     std::vector<void*> _allBlocks;
     usize _currentCapacity;
 };
+
+} // namespace ink
 
 #endif // OBJECTPOOL_H

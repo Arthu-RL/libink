@@ -2,6 +2,7 @@
 #define INKIXTREE_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -13,21 +14,26 @@ namespace ink {
 template <typename T>
 class InkixTree {
 public:
-    InkixTree() : _count(0), _root(std::make_unique<Node>()) {}
+    InkixTree() : _root(std::make_unique<Node>()) {}
 
+    // Returns nullptr if key was never inserted.
     T* get(std::string_view key)
     {
-        return &_findNode(key)->value;
+        Node* node = _findNode(key);
+        return node ? &node->value : nullptr;
     }
 
     const T* get(std::string_view key) const
     {
-        return &_findNode(key)->value;
+        const Node* node = _findNode(key);
+        return node ? &node->value : nullptr;
     }
 
-    T getCopy(std::string_view key)
+    std::optional<T> getCopy(std::string_view key) const
     {
-        return _findNode(key)->value;
+        const Node* node = _findNode(key);
+        if (!node) return std::nullopt;
+        return node->value;
     }
 
     void insert(std::string_view key, T value)
@@ -45,7 +51,7 @@ public:
             // If no match, so push a new brannch
             if (it == current->children.end())
             {
-                current->children.push_back(std::make_unique<Node>(key, value, true));
+                current->children.push_back(std::make_unique<Node>(key, std::move(value), true));
                 return;
             }
 
@@ -65,6 +71,7 @@ public:
                 if (key.empty())
                 {
                     child->is_terminal = true;
+                    child->value = std::move(value);
                 }
 
                 continue;
@@ -84,7 +91,7 @@ public:
             if (common_len < key.size())
             {
                 // if there is more string to insert, push the new leaf, what lacks from key to be child of splitNode too
-                std::unique_ptr<Node> newLeaf = std::make_unique<Node>(key.substr(common_len), value, true);
+                std::unique_ptr<Node> newLeaf = std::make_unique<Node>(key.substr(common_len), std::move(value), true);
                 splitNode->children.push_back(std::move(newLeaf));
             }
             else
@@ -103,7 +110,7 @@ private:
     struct Node {
         Node() = default;
 
-        Node(std::string_view _label, T& _value, bool _is_terminal) :
+        Node(std::string_view _label, const T& _value, bool _is_terminal) :
             label(_label), value(_value), is_terminal(_is_terminal) {}
 
         Node(std::string_view _label, T&& _value, bool _is_terminal) :
@@ -124,6 +131,8 @@ private:
         return len;
     }
 
+    // Returns nullptr unless `key` was actually inserted as a complete key
+    // (i.e. the matched node is terminal)
     Node* _findNode(std::string_view key)
     {
         Node* current = _root.get();
@@ -155,12 +164,16 @@ private:
             current = child;
         }
 
-        return current;
+        return current->is_terminal ? current : nullptr;
+    }
+
+    const Node* _findNode(std::string_view key) const
+    {
+        return const_cast<InkixTree*>(this)->_findNode(key);
     }
 
 private:
     std::unique_ptr<Node> _root;
-    u32 _count;
 };
 
 }
