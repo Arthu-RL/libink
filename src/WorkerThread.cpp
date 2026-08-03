@@ -50,7 +50,19 @@ void WorkerThread::stop()
 
     if (_thread.joinable())
     {
-        _thread.join();
+        // WaitTimeout: caller doesn't want to block on the in-flight
+        // process() call, so let the thread run to completion on its own.
+        // NOTE: if this runs from ~WorkerThread() the detached thread may
+        // still be inside process() calling into an object whose derived
+        // part is already destroyed. Accepted trade-off per policy contract.
+        if (_policy == Policy::WaitTimeout)
+        {
+            _thread.detach();
+        }
+        else
+        {
+            _thread.join();
+        }
     }
 
     if (_onDestructionCallback)

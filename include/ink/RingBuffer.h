@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <string>
+#include <vector>
 
 #include "ink/ink_base.hpp"
 
@@ -12,11 +13,14 @@ class INK_API RingBuffer {
 public:
     explicit RingBuffer(size_t capacity = 8192);
 
-    ~RingBuffer();
+    ~RingBuffer() = default;
 
     // Non-copyable
     RingBuffer(const RingBuffer&) = delete;
     RingBuffer& operator=(const RingBuffer&) = delete;
+
+    RingBuffer(RingBuffer&&) noexcept = default;
+    RingBuffer& operator=(RingBuffer&&) noexcept = default;
 
     // Read data from the buffer
     size_t read(char* dest, size_t maxLen);
@@ -43,7 +47,7 @@ public:
     bool full() const { return _size == _capacity; }
 
 private:
-    char* _buffer;
+    std::vector<char> _buffer;
     size_t _capacity;
     size_t _readPos;
     size_t _writePos;

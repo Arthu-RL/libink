@@ -2,6 +2,7 @@
 #define INKEDLIST_H
 
 #include <algorithm>
+#include <memory>
 
 #include "ink/ink_base.hpp"
 
@@ -12,6 +13,12 @@ class INK_API InkedList {
 public:
     struct Node {
         Node(const T& _data) : data(_data), prev(nullptr), next(nullptr) {}
+        // Without this overload, every `new Node(std::move(x))` call
+        // throughout this file would silently bind to the const T& ctor
+        // above and copy anyway -- all the T&& overloads (push_back,
+        // enqueue, insert, the T&& constructors) would be doing extra
+        // copies while looking like they move.
+        Node(T&& _data) : data(std::move(_data)), prev(nullptr), next(nullptr) {}
         T data;
         Node* prev;
         Node* next;
@@ -37,21 +44,27 @@ public:
 
     InkedList(const T& header_data, const T& data) : size(2)
     {
-        root = new Node(data);
+        // If the second `new` throws (OOM), the constructor never
+        // completes, so ~InkedList() never runs and a bare `Node* root`
+        // allocated first would leak. Hold it in a unique_ptr until both
+        // allocations have succeeded.
+        std::unique_ptr<Node> newRoot(new Node(data));
         Node* header = new Node(header_data);
-        root->prev = header;
-        header->next = root;
+        newRoot->prev = header;
+        header->next = newRoot.get();
 
+        root = newRoot.release();
         tail = root;
     }
 
     InkedList(T&& header_data, T&& data) : size(2)
     {
-        root = new Node(std::move(data));
+        std::unique_ptr<Node> newRoot(new Node(std::move(data)));
         Node* header = new Node(std::move(header_data));
-        root->prev = header;
-        header->next = root;
+        newRoot->prev = header;
+        header->next = newRoot.get();
 
+        root = newRoot.release();
         tail = root;
     }
 
@@ -214,13 +227,13 @@ public:
     {
         if (index == 0 || root == nullptr)
         {
-            enqueue(data);
+            enqueue(std::move(data));
             return;
         }
 
         if (index >= size)
         {
-            push_back(data);
+            push_back(std::move(data));
             return;
         }
 

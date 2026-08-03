@@ -15,11 +15,13 @@ namespace ink {
 
 class INK_API ThreadPool {
 public:
-    ThreadPool(size_t max_workers);
+    // max_workers must be >= 1: with zero workers, submitted tasks would
+    // queue forever and their futures would never resolve.
+    explicit ThreadPool(size_t max_workers);
     ~ThreadPool();
 
     template <typename Function, typename... Args>
-    std::future<std::invoke_result_t<Function, Args...>> submit(Function&& f, Args&&... args)
+    [[nodiscard]] std::future<std::invoke_result_t<Function, Args...>> submit(Function&& f, Args&&... args)
     {
         using ReturnType = std::invoke_result_t<Function, Args...>;
 

@@ -1,6 +1,7 @@
 #ifndef INKASSERT_H
 #define INKASSERT_H
 
+#include <csignal>
 #include <source_location>
 #include <utility>
 

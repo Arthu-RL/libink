@@ -41,12 +41,11 @@ public:
 
     inline static void* arena_alloc_block(ArenaBlock* b, size_t size, size_t align)
     {
-        u64 current_ptr = (u64)b->memory + (u64)b->offset;
+        const u64 base = reinterpret_cast<u64>(b->memory);
+        const u64 current_ptr = base + static_cast<u64>(b->offset);
+        const u64 dest_ptr = INK_ALIGN_SIZE(current_ptr, align);
 
-        u64 offset = (u64)b->memory;
-        u64 dest_ptr = INK_ALIGN_SIZE(current_ptr, align);
-
-        size_t new_offset = (dest_ptr - offset) + size;
+        const size_t new_offset = static_cast<size_t>(dest_ptr - base) + size;
 
         if (new_offset > b->size)
         {
@@ -54,7 +53,7 @@ public:
         }
 
         b->offset = new_offset;
-        return (void*)dest_ptr;
+        return reinterpret_cast<void*>(dest_ptr);
     }
 
     // Main allocation function
