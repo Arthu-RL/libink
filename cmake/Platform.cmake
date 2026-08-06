@@ -32,6 +32,10 @@ if(WIN32 AND NOT EMSCRIPTEN)
         # /EHsc: standard C++ exception unwinding (off by default under
         # cl.exe; the library throws std::bad_alloc/std::invalid_argument).
         # /utf-8: source and execution charset, matching GCC/Clang defaults.
-        add_compile_options(/EHsc /utf-8)
+        # /Zc:__cplusplus: cl.exe reports __cplusplus as 199711L regardless
+        # of the active /std: flag unless this is set, which trips
+        # ink_base.hpp's `#if __cplusplus < 202100L` C++23 guard even when
+        # CMAKE_CXX_STANDARD 23 has correctly selected -std:c++latest.
+        add_compile_options(/EHsc /utf-8 /Zc:__cplusplus)
     endif()
 endif()
