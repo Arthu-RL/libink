@@ -3,12 +3,12 @@ name: Release
 # Triggered by pushing a version tag, e.g.:
 #   git tag v0.1.0 && git push origin v0.1.0
 #
-# Builds libink.a (+ public headers + CMake package config) for Linux,
-# Android, and WebAssembly, then attaches one archive per platform to a
-# GitHub Release. These are separate binaries for separate toolchains/ABIs
-# -- there is no single artifact that covers all three. Unlike a
-# dependent project that bundles other static libraries into its own
-# archive, ink has nothing to merge: Threads and nlohmann_json stay
+# Builds libink.a/ink.lib (+ public headers + CMake package config) for
+# Linux, Android, WebAssembly, and Windows, then attaches one archive per
+# platform to a GitHub Release. These are separate binaries for separate
+# toolchains/ABIs -- there is no single artifact that covers all four.
+# Unlike a dependent project that bundles other static libraries into its
+# own archive, ink has nothing to merge: Threads and nlohmann_json stay
 # external find_dependency() calls in ink-config.cmake, consistent with
 # how the library is meant to be consumed via find_package(ink).
 
@@ -204,9 +204,62 @@ jobs:
           path: ink-${{ github.ref_name }}-wasm.tar.gz
           retention-days: 1
 
+  windows-release:
+    name: Package Windows
+    needs: create-release
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Install nlohmann_json (vcpkg)
+        # windows-latest ships vcpkg preinstalled at $VCPKG_INSTALLATION_ROOT;
+        # the static triplet matches the /MT-equivalent static-library build
+        # ink itself produces.
+        run: vcpkg install nlohmann-json:x64-windows-static
+
+      - name: Configure
+        # INK_NATIVE_OPTIMIZE has no effect under MSVC (see src/CMakeLists.txt)
+        # but is still passed off for consistency with the other release jobs.
+        run: >
+          cmake -S . -B build/windows/release -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DINK_BUILD_TESTS=OFF
+          -DINK_NATIVE_OPTIMIZE=OFF
+
+      - name: Build
+        run: cmake --build build/windows/release --parallel
+
+      - name: Install
+        run: cmake --install build/windows/release --prefix stage/ink-windows-x86_64
+
+      - name: Package
+        run: |
+          cd stage
+          7z a -tzip "../ink-${{ github.ref_name }}-windows-x86_64.zip" ink-windows-x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64
+          path: ink-${{ github.ref_name }}-windows-x86_64.zip
+          retention-days: 1
+
   publish-release:
     name: Publish release
-    needs: [linux-release, android-release, wasm-release]
+    needs: [linux-release, android-release, wasm-release, windows-release]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -218,7 +271,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.ref_name }}" artifacts/*/*.tar.gz \
+          gh release upload "${{ github.ref_name }}" artifacts/*/*.tar.gz artifacts/*/*.zip \
             --repo "${{ github.repository }}"
           gh release edit "${{ github.ref_name }}" --draft=false \
             --repo "${{ github.repository }}"

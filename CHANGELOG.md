@@ -5,6 +5,49 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0]
+
+### Added
+
+- **Windows support**: libink now builds natively on Windows (MSVC, CI
+  verified on `windows-latest`/VS 2022). `InkedArena` (`ArenaAllocator`)
+  now backs its blocks with `VirtualAlloc`/`VirtualFree` instead of
+  POSIX `mmap`/`munmap`, `utils::exec_command` uses `_popen`/`_pclose`,
+  and `utils::nowMillis` uses `std::chrono::steady_clock` in place of
+  `clock_gettime(CLOCK_MONOTONIC_COARSE, ...)`, which has no Windows
+  equivalent. `cmake/Platform.cmake` sets `NOMINMAX`/`WIN32_LEAN_AND_MEAN`
+  and `/EHsc`/`/utf-8`/`/Zc:__cplusplus` for MSVC targets -- the last
+  because cl.exe pins `__cplusplus` to `199711L` regardless of the active
+  `/std:` flag unless that switch is passed, which otherwise trips
+  `ink_base.hpp`'s C++23 `#error` guard. `<windows.h>` (needed for
+  `VirtualAlloc`/`VirtualFree`) is scoped to `ArenaAllocator.cpp` rather
+  than its public header, since it leaks macros -- `ERROR` in particular --
+  into every translation unit that includes it, which collided with
+  `LogLevel::ERROR` in `Inkogger.h` for any consumer of `ink.hpp`. The
+  Release workflow now packages a `windows-x86_64` archive (via
+  vcpkg-installed `nlohmann_json`) alongside the existing Linux/Android/
+  WebAssembly artifacts.
+
+### Changed
+
+- **Build system**: split the CMake package into two targets --
+  `ink::ink` (logging, JSON, containers, everything except real OS
+  threads) and `ink::threading` (`ThreadPool`/`WorkerThread`, opt-in).
+  On Emscripten, `-pthread` switches the whole WASM module to a shared,
+  growable `WebAssembly.Memory` backed by `SharedArrayBuffer`, which only
+  instantiates on a cross-origin-isolated page (COOP/COEP headers on
+  every response); consumers that never touch `ThreadPool`/`WorkerThread`
+  are no longer forced into that deployment requirement just for linking
+  `ink`. `-pthread`/`Threads::Threads` now apply only to `ink::threading`.
+  Downstream consumers that use `ThreadPool` or `WorkerThread` must add
+  `ink::threading` to their `target_link_libraries`.
+
+### Fixed
+
+- **Install rules**: `cmake/Install.cmake` now installs the new
+  `threading` target alongside `ink`, so `find_package(ink)` consumers
+  can link `ink::threading`.
+
 ## [0.1.0]
 
 First documented release. libink is a C++23 core utility and algorithm
@@ -82,4 +125,5 @@ library targeting Linux, WebAssembly (Emscripten), and Android (NDK).
   concurrency stress coverage for the logger's lock-free file-writing path
   and regression coverage for previously fixed defects.
 
+[0.2.0]: https://github.com/Arthu-RL/libink/releases/tag/0.2.0
 [0.1.0]: https://github.com/Arthu-RL/libink/releases/tag/0.1.0

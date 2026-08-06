@@ -37,3 +37,40 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure
+
+  test-windows:
+    name: Run tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v4
+
+      - name: Install nlohmann_json (vcpkg)
+        # windows-latest ships vcpkg preinstalled at $VCPKG_INSTALLATION_ROOT;
+        # the static triplet matches the /MT-equivalent static-library build
+        # ink itself produces.
+        run: vcpkg install nlohmann-json:x64-windows-static
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DINK_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure

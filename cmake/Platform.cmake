@@ -3,11 +3,6 @@ if(EMSCRIPTEN)
     set(INK_NATIVE_OPTIMIZE OFF CACHE BOOL "" FORCE)
     set(INK_ENABLE_LTO     OFF CACHE BOOL "" FORCE)
     set(INK_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-
-    # pthreads are required by ThreadPool / WorkerThread
-    # -pthread must appear at both compile and link time for emscripten
-    add_compile_options(-pthread)
-    add_link_options(-pthread)
 endif()
 
 if(ANDROID)
@@ -20,5 +15,27 @@ if(ANDROID)
     # For armeabi-v7a add hardware FP:
     if(ANDROID_ABI STREQUAL "armeabi-v7a")
         add_compile_options(-mfpu=neon -mfloat-abi=softfp)
+    endif()
+endif()
+
+if(WIN32 AND NOT EMSCRIPTEN)
+    message(STATUS "[ink] Target platform: Windows  Compiler=${CMAKE_CXX_COMPILER_ID}")
+
+    # <windows.h>'s min/max macros collide with std::min/std::max and this
+    # library's own INK_MIN/INK_MAX (ink_base.hpp); WIN32_LEAN_AND_MEAN keeps
+    # the winsock/GDI surface (unused here) out of the build entirely.
+    # Applies to every target in the tree, including consumers that pull in
+    # <windows.h> themselves.
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+
+    if(MSVC)
+        # /EHsc: standard C++ exception unwinding (off by default under
+        # cl.exe; the library throws std::bad_alloc/std::invalid_argument).
+        # /utf-8: source and execution charset, matching GCC/Clang defaults.
+        # /Zc:__cplusplus: cl.exe reports __cplusplus as 199711L regardless
+        # of the active /std: flag unless this is set, which trips
+        # ink_base.hpp's `#if __cplusplus < 202100L` C++23 guard even when
+        # CMAKE_CXX_STANDARD 23 has correctly selected -std:c++latest.
+        add_compile_options(/EHsc /utf-8 /Zc:__cplusplus)
     endif()
 endif()

@@ -1,9 +1,15 @@
 include(CMakePackageConfigHelpers)
 
-# Install static library binary and header file sets directly
+# Install static library binaries and header file sets directly. ink and
+# ink_threading are two separate targets (see src/CMakeLists.txt for why);
+# only ink carries the public_headers FILE_SET.
 install(TARGETS ink
     EXPORT ink-targets
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(TARGETS threading
+    EXPORT ink-targets
 )
 
 # Generate config configuration templates in build tree

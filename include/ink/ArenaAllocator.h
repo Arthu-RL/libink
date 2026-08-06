@@ -1,19 +1,11 @@
 #ifndef ARENA_ALLOCATOR_H
 #define ARENA_ALLOCATOR_H
 
-#include <sys/mman.h>
 #include <stddef.h>
 #include <string.h>
 
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-
-#ifndef MAP_POPULATE
-#define MAP_POPULATE 0
-#endif
-
 #include "ink/ink_base.hpp"
+
 
 namespace ink {
 
