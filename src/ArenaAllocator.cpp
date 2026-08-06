@@ -4,17 +4,28 @@ namespace ink {
 
 InkedArena::ArenaBlock* InkedArena::arena_new_block(size_t size)
 {
+    const size_t total = sizeof(ArenaBlock) + size;
+
+#if defined(INK_PLATFORM_WINDOWS)
+    // MEM_COMMIT forces immediate physical backing, mirroring MAP_POPULATE
+    // below so first access doesn't take a page fault.
+    void* raw_mem = VirtualAlloc(nullptr, total, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (raw_mem == nullptr) 
+        return nullptr;
+#else
     // Added MAP_POPULATE to force physical memory allocation immediately.
     // This prevents "Page Faults" when you first access the memory.
     void* raw_mem = mmap(
         NULL,
-        sizeof(ArenaBlock) + size,
+        total,
         PROT_READ | PROT_WRITE,
         MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE,
         -1, 0
         );
 
-    if (raw_mem == MAP_FAILED) return nullptr;
+    if (raw_mem == MAP_FAILED) 
+        return nullptr;
+#endif
 
     ArenaBlock* block = static_cast<ArenaBlock*>(raw_mem);
 
@@ -61,7 +72,11 @@ void InkedArena::arena_destroy(Arena* a)
     while (b)
     {
         ArenaBlock* next = b->next;
+#if defined(INK_PLATFORM_WINDOWS)
+        VirtualFree(b, 0, MEM_RELEASE);
+#else
         munmap(b, sizeof(ArenaBlock) + b->size);
+#endif
         b = next;
     }
     a->head = nullptr;

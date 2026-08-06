@@ -1,7 +1,11 @@
 #include "../include/ink/utils.h"
 
-#include <time.h>
 #include <charconv>
+#include <chrono>
+
+#if !defined(INK_PLATFORM_WINDOWS)
+#include <time.h>
+#endif
 
 namespace ink {
 
@@ -11,7 +15,13 @@ constexpr usize MAX_CHUNKS = 4096;
 
 std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
 {
+    // popen/pclose are POSIX; MSVC's CRT exposes the same pipe-a-child-process
+    // behavior under the _popen/_pclose spelling instead.
+#if defined(INK_PLATFORM_WINDOWS)
+    FILE* pipe = _popen(cmd.c_str(), "r");
+#else
     FILE* pipe = popen(cmd.data(), "r");
+#endif
     if (!pipe) {
         return std::unexpected(ink_result_t::ERROR_IO);
     }
@@ -26,7 +36,11 @@ std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
         result.append(buffer, bytesRead);
     }
 
+#if defined(INK_PLATFORM_WINDOWS)
+    _pclose(pipe);
+#else
     pclose(pipe);
+#endif
 
     return result;
 }
@@ -51,11 +65,18 @@ std::expected<usize, ink_result_t> string_int(std::string_view s) noexcept
 
 u64 nowMillis()
 {
+#if defined(INK_PLATFORM_WINDOWS)
+    // No POSIX CLOCK_MONOTONIC_COARSE on Windows; steady_clock maps to
+    // QueryPerformanceCounter, which is monotonic and cheap enough here.
+    const auto now = std::chrono::steady_clock::now().time_since_epoch();
+    return static_cast<u64>(std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
+#else
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
 
     return static_cast<u64>(ts.tv_sec) * 1000
            + static_cast<u64>(ts.tv_nsec) / 1'000'000;
+#endif
 }
 
 }
