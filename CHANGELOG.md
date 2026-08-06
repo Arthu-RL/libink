@@ -16,9 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `utils::nowMillis` uses `std::chrono::steady_clock` in place of
   `clock_gettime(CLOCK_MONOTONIC_COARSE, ...)`, which has no Windows
   equivalent. `cmake/Platform.cmake` sets `NOMINMAX`/`WIN32_LEAN_AND_MEAN`
-  and `/EHsc`/`/utf-8` for MSVC targets, and the Release workflow now
-  packages a `windows-x86_64` archive (via vcpkg-installed `nlohmann_json`)
-  alongside the existing Linux/Android/WebAssembly artifacts.
+  and `/EHsc`/`/utf-8`/`/Zc:__cplusplus` for MSVC targets -- the last
+  because cl.exe pins `__cplusplus` to `199711L` regardless of the active
+  `/std:` flag unless that switch is passed, which otherwise trips
+  `ink_base.hpp`'s C++23 `#error` guard. `<windows.h>` (needed for
+  `VirtualAlloc`/`VirtualFree`) is scoped to `ArenaAllocator.cpp` rather
+  than its public header, since it leaks macros -- `ERROR` in particular --
+  into every translation unit that includes it, which collided with
+  `LogLevel::ERROR` in `Inkogger.h` for any consumer of `ink.hpp`. The
+  Release workflow now packages a `windows-x86_64` archive (via
+  vcpkg-installed `nlohmann_json`) alongside the existing Linux/Android/
+  WebAssembly artifacts.
 
 ### Changed
 

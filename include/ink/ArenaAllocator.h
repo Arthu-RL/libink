@@ -6,30 +6,6 @@
 
 #include "ink/ink_base.hpp"
 
-#if defined(INK_PLATFORM_WINDOWS)
-// mmap/munmap have no Windows equivalent; arena_new_block/arena_destroy
-// (ArenaAllocator.cpp) reserve+commit anonymous pages via VirtualAlloc/
-// VirtualFree instead. NOMINMAX/WIN32_LEAN_AND_MEAN are already set
-// globally (see cmake/Platform.cmake) but are repeated here so this header
-// is safe to include standalone.
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
-#include <sys/mman.h>
-
-#ifndef MAP_ANONYMOUS
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-
-#ifndef MAP_POPULATE
-#define MAP_POPULATE 0
-#endif
-#endif
 
 namespace ink {
 

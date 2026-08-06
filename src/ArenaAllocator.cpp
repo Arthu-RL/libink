@@ -1,5 +1,28 @@
 #include "ink/ArenaAllocator.h"
 
+// mmap/munmap have no Windows equivalent; arena_new_block/arena_destroy
+// below reserve+commit anonymous pages via VirtualAlloc/VirtualFree
+// instead.
+#if defined(INK_PLATFORM_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <sys/mman.h>
+
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
+#ifndef MAP_POPULATE
+#define MAP_POPULATE 0
+#endif
+#endif
+
 namespace ink {
 
 InkedArena::ArenaBlock* InkedArena::arena_new_block(size_t size)
