@@ -1,10 +1,4 @@
-file(GLOB_RECURSE INK_ALL_SOURCES CONFIGURE_DEPENDS "*.cpp")
-set(INK_THREADING_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/ThreadPool.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/WorkerThread.cpp"
-)
-set(INK_SOURCES ${INK_ALL_SOURCES})
-list(REMOVE_ITEM INK_SOURCES ${INK_THREADING_SOURCES})
+file(GLOB_RECURSE INK_SOURCES  CONFIGURE_DEPENDS "*.cpp")
 
 file(GLOB_RECURSE INK_HEADERS  CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/include/ink/*.h"
@@ -42,7 +36,6 @@ function(ink_apply_common_compile_options target)
     endif()
 endfunction()
 
-# ---- ink::ink (core) ----
 add_library(ink STATIC)
 add_library(ink::ink ALIAS ink)
 
@@ -61,11 +54,15 @@ target_include_directories(ink PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_link_libraries(ink PUBLIC nlohmann_json::nlohmann_json)
-
-if(NOT EMSCRIPTEN)
-    target_link_libraries(ink PUBLIC Threads::Threads)
-endif()
+# ThreadPool/WorkerThread ship in this one target rather than a separate
+# ink::threading: ink.hpp includes both headers, so every consumer of the
+# aggregate header already depends on them, and splitting the target only meant
+# a consumer could compile against a class it could not link.
+target_link_libraries(ink
+    PUBLIC
+        Threads::Threads
+        nlohmann_json::nlohmann_json
+)
 
 # Inkogger routes console output through __android_log_print on Android,
 # which lives in the NDK's liblog.
@@ -73,23 +70,16 @@ if(ANDROID)
     target_link_libraries(ink PUBLIC log)
 endif()
 
-ink_apply_common_compile_options(ink)
-
-add_library(threading STATIC)
-add_library(ink::threading ALIAS threading)
-
-target_sources(threading PRIVATE ${INK_THREADING_SOURCES})
-
-target_link_libraries(threading PUBLIC ink Threads::Threads)
-
 # forward -pthread so object files are compiled with shared-memory model.
-# See the file-level comment above for why this stays off of ink::ink.
-# (Threads::Threads already carries -pthread as an interface option on
-# Emscripten, but the manual flags are kept here too so this target doesn't
-# silently depend on that CMake/toolchain implementation detail.)
+# On Emscripten this is what makes the module's WebAssembly.Memory shared and
+# backed by a SharedArrayBuffer, so every page serving a build of this library
+# must send COOP/COEP -- see the WASM notes in the consumers' build scripts.
+# (Threads::Threads already carries -pthread as an interface option there, but
+# the manual flags are kept so this does not silently depend on that
+# CMake/toolchain implementation detail.)
 if(EMSCRIPTEN)
-    target_compile_options(threading PUBLIC -pthread)
-    target_link_options(threading PUBLIC -pthread)
+    target_compile_options(ink PUBLIC -pthread)
+    target_link_options(ink  PUBLIC -pthread)
 endif()
 
-ink_apply_common_compile_options(threading)
+ink_apply_common_compile_options(ink)

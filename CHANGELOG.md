@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+
+### Changed
+
+- **Build system**: `ink::threading` is gone; `ThreadPool`/`WorkerThread` are
+  back in `ink::ink`, and `Threads::Threads`/`-pthread` apply to it again on
+  every platform including Emscripten. The 0.2.0 split let a consumer include
+  `ink.hpp` -- which pulls `ThreadPool.h` and `WorkerThread.h` -- and compile
+  against classes it could not link, which is how it actually failed
+  downstream. WebAssembly consumers are multithreaded again and must serve
+  every response with COOP/COEP (`Cross-Origin-Opener-Policy: same-origin`,
+  `Cross-Origin-Embedder-Policy: require-corp`), since `-pthread` makes the
+  module's `WebAssembly.Memory` shared and `SharedArrayBuffer`-backed.
+  Consumers that linked `ink::threading` should drop it: linking `ink::ink`
+  is now sufficient, and `ink::threading` no longer exists to link.
+
 ## [0.2.0]
 
 ### Added
