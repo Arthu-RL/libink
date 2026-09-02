@@ -71,8 +71,18 @@ u64 nowMillis()
     const auto now = std::chrono::steady_clock::now().time_since_epoch();
     return static_cast<u64>(std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
 #else
+    // CLOCK_MONOTONIC_COARSE is a Linux extension that reads the kernel's
+    // cached tick instead of the hardware timer. Apple and the BSDs only have
+    // the precise clock, which costs more but is still far below the
+    // millisecond this function resolves to.
+#if defined(CLOCK_MONOTONIC_COARSE)
+    constexpr clockid_t MONOTONIC_CLOCK = CLOCK_MONOTONIC_COARSE;
+#else
+    constexpr clockid_t MONOTONIC_CLOCK = CLOCK_MONOTONIC;
+#endif
+
     timespec ts;
-    clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
+    clock_gettime(MONOTONIC_CLOCK, &ts);
 
     return static_cast<u64>(ts.tv_sec) * 1000
            + static_cast<u64>(ts.tv_nsec) / 1'000'000;

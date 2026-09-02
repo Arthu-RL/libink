@@ -57,8 +57,10 @@ jobs:
 
       - name: Install nlohmann_json (vcpkg)
         # windows-latest ships vcpkg preinstalled at $VCPKG_INSTALLATION_ROOT;
-        # the static triplet matches the /MT-equivalent static-library build
-        # ink itself produces.
+        # the static triplet builds it against the static CRT (/MT), which is
+        # why Configure below passes CMAKE_MSVC_RUNTIME_LIBRARY: CMake
+        # otherwise defaults this project to /MD and the link fails with
+        # LNK2038.
         run: vcpkg install nlohmann-json:x64-windows-static
 
       - name: Configure
@@ -67,6 +69,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
           -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>"
           -DINK_BUILD_TESTS=ON
 
       - name: Build
