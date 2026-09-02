@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1]
+
+### Fixed
+
+- `ink::utils::nowMillis()`: `CLOCK_MONOTONIC_COARSE` is a Linux-only clock
+  id, so `src/utils.cpp` failed outright on macOS/iOS with `use of
+  undeclared identifier`. Now behind `#if defined(CLOCK_MONOTONIC_COARSE)`,
+  falling back to plain `CLOCK_MONOTONIC` where the coarse variant doesn't
+  exist -- costlier per call, still well under the millisecond this
+  function resolves to.
+
 ## [0.3.0]
 
 ### Changed
