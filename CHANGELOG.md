@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1]
 
+### Changed
+
+- Every platform now installs into **one prefix** instead of a per-platform
+  directory. Headers go to `<prefix>/include` once (they are byte-identical
+  across targets) and the library carries its ABI tag --
+  `libink_linux_x86_64.a`, `libink_linux_x86_64_debug.a`,
+  `libink_android_arm64_v8a.a`, `libink_wasm32.a`. Each build contributes its
+  own `ink-targets-<tag>.cmake`; the shared `ink-config.cmake` resolves the
+  caller's tag through the installed `PlatformSuffix.cmake` and includes the
+  matching one, so `find_package(ink CONFIG)` keeps working unchanged and
+  fails with the list of installed tags when the caller's is missing. The
+  version file is now `ARCH_INDEPENDENT`, since one file serves every
+  platform and the default stamped the builder's word size into it -- a
+  wasm32 install would otherwise be rejected by a 64-bit consumer
+
 ### Fixed
 
 - `ink::utils::nowMillis()`: `CLOCK_MONOTONIC_COARSE` is a Linux-only clock

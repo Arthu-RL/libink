@@ -17,6 +17,10 @@ option(INK_ENABLE_LTO "Enable Interprocedural Optimization / LTO" ON)
 option(INK_NATIVE_OPTIMIZE "Target host processor architecture (-march=native)" ON)
 
 # Module Orchestration
+include(cmake/PlatformSuffix.cmake)
+ink_platform_suffix(INK_PLATFORM_SUFFIX)
+message(STATUS "ink: installing as ink_${INK_PLATFORM_SUFFIX}")
+
 include(cmake/Platform.cmake)
 include(cmake/Compiler.cmake)
 include(cmake/Dependencies.cmake)
