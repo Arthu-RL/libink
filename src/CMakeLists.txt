@@ -39,6 +39,10 @@ endfunction()
 add_library(ink STATIC)
 add_library(ink::ink ALIAS ink)
 
+#! One flat lib directory holds every platform's build, so the ABI tag is in
+#! the filename: libink_linux_x86_64.a, libink_wasm32.a, ...
+set_target_properties(ink PROPERTIES OUTPUT_NAME "ink_${INK_PLATFORM_SUFFIX}")
+
 target_sources(ink
     PRIVATE
         ${INK_SOURCES}
