@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.3.3)
 project(ink
-    VERSION 0.3.0
+    VERSION 0.4.0
     DESCRIPTION "Ink Core Subsystem"
     LANGUAGES CXX
 )
@@ -24,6 +24,10 @@ message(STATUS "ink: installing as ink_${INK_PLATFORM_SUFFIX}")
 include(cmake/Platform.cmake)
 include(cmake/Compiler.cmake)
 include(cmake/Dependencies.cmake)
+
+# Not a build input: lists docs/ in the IDE project tree.
+file(GLOB INK_DOC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/docs/*.md")
+add_custom_target(ink_docs SOURCES ${INK_DOC_FILES} README.md CHANGELOG.md)
 
 add_subdirectory(src)
 
