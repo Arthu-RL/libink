@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.3.3)
 project(ink
-    VERSION 0.4.0
+    VERSION 0.5.0
     DESCRIPTION "Ink Core Subsystem"
     LANGUAGES CXX
 )

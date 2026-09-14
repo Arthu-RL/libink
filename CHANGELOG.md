@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0]
+
+### Added
+
+- `ArenaResource`: a PMR adapter over `InkedArena`, with nested reset scopes,
+  reusable blocks, aligned allocations, and `std::bad_alloc` on failure.
+  Destroy PMR objects before the outermost scope ends; use one resource per thread.
+- `ParallelProcessor`: synchronous fixed-worker dispatch without task nodes or
+  futures. Joins workers before propagating exceptions, serializes concurrent
+  parallel dispatches, and runs recursive dispatch inline.
+- Focused storage/dispatch tests; both APIs are included by `ink/ink.hpp`.
+
+### Fixed
+
+- Synchronize public version macros with `VERSION` and the CMake package version.
+
 ## [0.4.0]
 
 ### Changed
