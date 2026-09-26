@@ -144,9 +144,10 @@ using isize = std::ptrdiff_t;
 using f32 = float;
 using f64 = double;
 
-using ink_h = void*;
+using ink_h = void *;
 
-enum ink_result_t : i32 {
+enum ink_result_t : i32
+{
     SUCCESS = 0,
     ERROR_GENERIC = -1,
     ERROR_INVALID_PARAM = -2,
@@ -158,15 +159,14 @@ enum ink_result_t : i32 {
 
 #include <functional>
 
-namespace ink {
+namespace ink
+{
 #if defined(__cpp_lib_move_only_function)
-    template <typename Sig>
-    using move_only_function = std::move_only_function<Sig>;
+template <typename Sig> using move_only_function = std::move_only_function<Sig>;
 #else
-    template <typename Sig>
-    using move_only_function = std::function<Sig>;
+template <typename Sig> using move_only_function = std::function<Sig>;
 #endif
-}
+} // namespace ink
 
 /*====================
  * UTILITY MACROS

@@ -8,7 +8,8 @@
 #include <thread>
 #include <vector>
 
-namespace ink {
+namespace ink
+{
 
 /**
  * Synchronous fork-join over a fixed set of workers.
@@ -22,8 +23,9 @@ namespace ink {
  * run() on the same processor executes that inner range inline on the
  * calling worker, so recursion cannot deadlock waiting for itself.
  */
-class ParallelProcessor {
-public:
+class ParallelProcessor
+{
+  public:
     /**
      * @param concurrency Threads that take part in a dispatch, counting the
      *        caller: `concurrency - 1` workers are created. Clamped to 1.
@@ -35,18 +37,25 @@ public:
         try
         {
             for (std::size_t i = 1; i < concurrency; ++i)
-                _workers.emplace_back([this, i] { worker(i); });
+                _workers.emplace_back(
+                    [this, i]
+                    {
+                        worker(i);
+                    });
         }
-        catch (...) 
-        { 
-            stop(); 
-            throw; 
+        catch (...)
+        {
+            stop();
+            throw;
         }
     }
     /** Joins the workers. No dispatch may be in progress on another thread. */
-    ~ParallelProcessor() { stop(); }
-    ParallelProcessor(const ParallelProcessor&) = delete;
-    ParallelProcessor& operator=(const ParallelProcessor&) = delete;
+    ~ParallelProcessor()
+    {
+        stop();
+    }
+    ParallelProcessor(const ParallelProcessor &) = delete;
+    ParallelProcessor &operator=(const ParallelProcessor &) = delete;
 
     /**
      * Calls `body(i)` for every `i` in `[0, count)` across the workers and the
@@ -59,14 +68,14 @@ public:
      *
      * @param body Invoked from several threads at once; must be safe for that.
      */
-    void run(std::size_t count, const std::function<void(std::size_t)>& body)
+    void run(std::size_t count, const std::function<void(std::size_t)> &body)
     {
-        if (!count) 
+        if (!count)
             return;
 
         if (_active == this || _workers.empty() || count == 1)
         {
-            for (std::size_t i = 0; i < count; ++i) 
+            for (std::size_t i = 0; i < count; ++i)
                 body(i);
             return;
         }
@@ -85,26 +94,31 @@ public:
         _ready.notify_all();
         invoke(0);
         std::unique_lock lock(_mutex);
-        _done.wait(lock, [this] { return _remaining == 0; });
+        _done.wait(lock,
+                   [this]
+                   {
+                       return _remaining == 0;
+                   });
         _body = nullptr;
-        if (_error) std::rethrow_exception(_error);
+        if (_error)
+            std::rethrow_exception(_error);
     }
 
-private:
+  private:
     /** Runs @p band's stride of the current range, capturing its first exception. */
     void invoke(std::size_t band) noexcept
     {
-        auto* previous = _active;
+        auto *previous = _active;
         _active = this;
         try
         {
-            for (std::size_t i = band; i < _count; i += _workers.size() + 1) 
+            for (std::size_t i = band; i < _count; i += _workers.size() + 1)
                 (*_body)(i);
         }
         catch (...)
         {
             const std::lock_guard lock(_mutex);
-            if (!_error) 
+            if (!_error)
                 _error = std::current_exception();
         }
         _active = previous;
@@ -117,8 +131,12 @@ private:
         std::unique_lock lock(_mutex);
         while (true)
         {
-            _ready.wait(lock, [&] { return _stopping || _generation != observed; });
-            if (_stopping) 
+            _ready.wait(lock,
+                        [&]
+                        {
+                            return _stopping || _generation != observed;
+                        });
+            if (_stopping)
             {
                 return;
             }
@@ -126,7 +144,7 @@ private:
             lock.unlock();
             invoke(band);
             lock.lock();
-            if (--_remaining == 0) 
+            if (--_remaining == 0)
             {
                 _done.notify_one();
             }
@@ -141,9 +159,9 @@ private:
             _stopping = true;
         }
         _ready.notify_all();
-        for (auto& thread : _workers) 
+        for (auto &thread : _workers)
         {
-            if (thread.joinable()) 
+            if (thread.joinable())
             {
                 thread.join();
             }
@@ -152,7 +170,7 @@ private:
 
     /** The processor whose body this thread is currently inside, if any; what
      *  makes a recursive run() go inline instead of deadlocking. */
-    inline static thread_local ParallelProcessor* _active = nullptr;
+    inline static thread_local ParallelProcessor *_active = nullptr;
 
     /** Bands 1..N; band 0 is whichever thread called run(). */
     std::vector<std::thread> _workers;
@@ -164,7 +182,7 @@ private:
     std::condition_variable _ready, _done;
 
     /** The dispatch in progress. Points at the caller's argument, which outlives the dispatch. */
-    const std::function<void(std::size_t)>* _body = nullptr;
+    const std::function<void(std::size_t)> *_body = nullptr;
 
     /** _count: range size; _remaining: workers still running; _generation: dispatch number workers compare against. */
     std::size_t _count = 0, _remaining = 0, _generation = 0;

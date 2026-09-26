@@ -6,22 +6,28 @@
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
-template <typename T>
-class INK_API InkedList {
-public:
-    struct Node {
-        Node(const T& _data) : data(_data), prev(nullptr), next(nullptr) {}
+template <typename T> class INK_API InkedList
+{
+  public:
+    struct Node
+    {
+        Node(const T &_data) : data(_data), prev(nullptr), next(nullptr)
+        {
+        }
         // Without this overload, every `new Node(std::move(x))` call
         // throughout this file would silently bind to the const T& ctor
         // above and copy anyway -- all the T&& overloads (push_back,
         // enqueue, insert, the T&& constructors) would be doing extra
         // copies while looking like they move.
-        Node(T&& _data) : data(std::move(_data)), prev(nullptr), next(nullptr) {}
+        Node(T &&_data) : data(std::move(_data)), prev(nullptr), next(nullptr)
+        {
+        }
         T data;
-        Node* prev;
-        Node* next;
+        Node *prev;
+        Node *next;
     };
 
     InkedList() : root(nullptr), tail(nullptr), size(0)
@@ -29,27 +35,26 @@ public:
         // Empty
     }
 
-
-    InkedList(const T& data) : size(1)
+    InkedList(const T &data) : size(1)
     {
         root = new Node(data);
         tail = root;
     }
 
-    InkedList(T&& data) : size(1)
+    InkedList(T &&data) : size(1)
     {
         root = new Node(std::move(data));
         tail = root;
     }
 
-    InkedList(const T& header_data, const T& data) : size(2)
+    InkedList(const T &header_data, const T &data) : size(2)
     {
         // If the second `new` throws (OOM), the constructor never
         // completes, so ~InkedList() never runs and a bare `Node* root`
         // allocated first would leak. Hold it in a unique_ptr until both
         // allocations have succeeded.
         std::unique_ptr<Node> newRoot(new Node(data));
-        Node* header = new Node(header_data);
+        Node *header = new Node(header_data);
         newRoot->prev = header;
         header->next = newRoot.get();
 
@@ -57,10 +62,10 @@ public:
         tail = root;
     }
 
-    InkedList(T&& header_data, T&& data) : size(2)
+    InkedList(T &&header_data, T &&data) : size(2)
     {
         std::unique_ptr<Node> newRoot(new Node(std::move(data)));
-        Node* header = new Node(std::move(header_data));
+        Node *header = new Node(std::move(header_data));
         newRoot->prev = header;
         header->next = newRoot.get();
 
@@ -70,27 +75,34 @@ public:
 
     ~InkedList()
     {
-        Node* current = root;
-        while (current != nullptr) {
-            Node* next = current->next;
+        Node *current = root;
+        while (current != nullptr)
+        {
+            Node *next = current->next;
             delete current;
             current = next;
         }
     }
 
-    InkedList(InkedList&& inkedList) = delete;
-    InkedList(const InkedList& inkedList) = delete;
-    InkedList& operator=(const InkedList& inkedList) = delete;
-    InkedList& operator=(InkedList&& inkedList) = delete;
+    InkedList(InkedList &&inkedList) = delete;
+    InkedList(const InkedList &inkedList) = delete;
+    InkedList &operator=(const InkedList &inkedList) = delete;
+    InkedList &operator=(InkedList &&inkedList) = delete;
 
     // Methods
-    Node* head() noexcept { return root; }
-
-    size_t length() const noexcept { return size; }
-
-    void push_back(const T& data)
+    Node *head() noexcept
     {
-        Node* newNode = new Node(data);
+        return root;
+    }
+
+    size_t length() const noexcept
+    {
+        return size;
+    }
+
+    void push_back(const T &data)
+    {
+        Node *newNode = new Node(data);
         if (root == nullptr)
         {
             root = newNode;
@@ -105,9 +117,9 @@ public:
         size++;
     }
 
-    void push_back(T&& data)
+    void push_back(T &&data)
     {
-        Node* newNode = new Node(std::move(data));
+        Node *newNode = new Node(std::move(data));
         if (root == nullptr)
         {
             root = newNode;
@@ -122,9 +134,9 @@ public:
         size++;
     }
 
-    void enqueue(const T& data)
+    void enqueue(const T &data)
     {
-        Node* newNode = new Node(data);
+        Node *newNode = new Node(data);
         if (root == nullptr)
         {
             root = newNode;
@@ -139,9 +151,9 @@ public:
         size++;
     }
 
-    void enqueue(T&& data)
+    void enqueue(T &&data)
     {
-        Node* newNode = new Node(std::move(data));
+        Node *newNode = new Node(std::move(data));
         if (root == nullptr)
         {
             root = newNode;
@@ -156,7 +168,7 @@ public:
         size++;
     }
 
-    bool pop_front(T* data = nullptr)
+    bool pop_front(T *data = nullptr)
     {
         if (root == nullptr)
             return false;
@@ -164,7 +176,7 @@ public:
         if (data != nullptr)
             *data = std::move(root->data);
 
-        Node* oldRoot = root;
+        Node *oldRoot = root;
         root = root->next;
         if (root == nullptr)
             tail = nullptr;
@@ -176,7 +188,7 @@ public:
         return true;
     }
 
-    bool pop_back(T* data = nullptr)
+    bool pop_back(T *data = nullptr)
     {
         if (tail == nullptr)
             return false;
@@ -184,7 +196,7 @@ public:
         if (data != nullptr)
             *data = std::move(tail->data);
 
-        Node* oldTail = tail;
+        Node *oldTail = tail;
         tail = tail->prev;
 
         if (tail == nullptr)
@@ -197,7 +209,7 @@ public:
         return true;
     }
 
-    void insert(const T& data, size_t index)
+    void insert(const T &data, size_t index)
     {
         if (index == 0 || root == nullptr)
         {
@@ -211,11 +223,11 @@ public:
             return;
         }
 
-        Node* current = root;
+        Node *current = root;
         for (size_t i = 0; i < index; i++)
             current = current->next;
 
-        Node* newNode = new Node(data);
+        Node *newNode = new Node(data);
         newNode->prev = current->prev;
         newNode->next = current;
         current->prev->next = newNode;
@@ -223,7 +235,7 @@ public:
         size++;
     }
 
-    void insert(T&& data, size_t index)
+    void insert(T &&data, size_t index)
     {
         if (index == 0 || root == nullptr)
         {
@@ -237,11 +249,11 @@ public:
             return;
         }
 
-        Node* current = root;
+        Node *current = root;
         for (size_t i = 0; i < index; i++)
             current = current->next;
 
-        Node* newNode = new Node(std::move(data));
+        Node *newNode = new Node(std::move(data));
         newNode->prev = current->prev;
         newNode->next = current;
         current->prev->next = newNode;
@@ -260,7 +272,7 @@ public:
         if (index == size - 1)
             return pop_back();
 
-        Node* current = root;
+        Node *current = root;
         for (size_t i = 0; i < index; i++)
             current = current->next;
 
@@ -271,7 +283,7 @@ public:
         return true;
     }
 
-    bool remove_data(const T& data)
+    bool remove_data(const T &data)
     {
         if (root == nullptr)
             return false;
@@ -282,7 +294,7 @@ public:
         if (tail->data == data)
             return pop_back();
 
-        Node* current = root->next;
+        Node *current = root->next;
         while (current != nullptr && current != tail)
         {
             if (current->data == data)
@@ -304,9 +316,9 @@ public:
         return false;
     }
 
-private:
-    Node* root; // First element, that can have a header
-    Node* tail; // Back
+  private:
+    Node *root; // First element, that can have a header
+    Node *tail; // Back
     size_t size;
 };
 

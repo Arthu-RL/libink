@@ -18,6 +18,7 @@ jobs:
 
     container:
       image: arthurrl/vulkan-dev:lts
+      options: --user 0
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -25,15 +26,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install C++ quality tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends clang-format-21 clang-tidy-21
+
+      - name: Check C++ formatting
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 ci/check-cpp.py format --base "$BASE_SHA"
 
       - name: Configure
         run: >
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
           -DINK_BUILD_TESTS=ON
 
       - name: Build
         run: cmake --build build --parallel
+
+      - name: Lint C++ changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 ci/check-cpp.py lint --base "$BASE_SHA" --build build
 
       - name: Run tests
         run: ctest --test-dir build --output-on-failure

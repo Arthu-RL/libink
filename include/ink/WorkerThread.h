@@ -1,22 +1,23 @@
 #ifndef WORKERTHREAD_H
 #define WORKERTHREAD_H
 
-#include <functional>
-#include <thread>
 #include <atomic>
-#include <mutex>
 #include <condition_variable>
+#include <functional>
+#include <mutex>
+#include <thread>
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
 class INK_API WorkerThread
 {
-public:
+  public:
     enum Policy
     {
-        WaitTimeout = 0,      // Stop immediately (don't wait for current process logic to finish) - no thread cancellation
+        WaitTimeout = 0, // Stop immediately (don't wait for current process logic to finish) - no thread cancellation
         WaitProcessFinish = 1 // Allow the current 'process()' call to complete before joining
     };
 
@@ -33,13 +34,19 @@ public:
     void setOnStartAction(WTCallback onStartCallback) noexcept;
     void setOnDestructionAction(WTCallback onDestructionCallback) noexcept;
 
-    bool isRunning() const { return _isRunning; }
-    bool isProcessing() const { return _isProcessing; }
+    bool isRunning() const
+    {
+        return _isRunning;
+    }
+    bool isProcessing() const
+    {
+        return _isProcessing;
+    }
 
-protected:
+  protected:
     virtual void process() = 0;
 
-private:
+  private:
     void _process();
 
     std::atomic<bool> _isRunning;
@@ -57,6 +64,6 @@ private:
     WTCallback _onDestructionCallback;
 };
 
-}
+} // namespace ink
 
 #endif // WORKERTHREAD_H

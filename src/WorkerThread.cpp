@@ -2,14 +2,12 @@
 
 #include <chrono>
 
-namespace ink {
+namespace ink
+{
 
-WorkerThread::WorkerThread(Policy policy, size_t timeoutSecs) :
-    _isRunning(false),
-    _isProcessing(false),
-    _requestProcessing(false),
-    _policy(policy),
-    _timeoutMs(timeoutSecs * 1000)
+WorkerThread::WorkerThread(Policy policy, size_t timeoutSecs)
+    : _isRunning(false), _isProcessing(false), _requestProcessing(false), _policy(policy),
+      _timeoutMs(timeoutSecs * 1000)
 {
 }
 
@@ -98,15 +96,18 @@ void WorkerThread::_process()
         process();
         _isProcessing = false;
 
-        if (!_isRunning) break;
+        if (!_isRunning)
+            break;
 
         std::unique_lock<std::mutex> lock(_mutex);
-        _cv.wait_for(lock, std::chrono::milliseconds(_timeoutMs), [this]() {
-            return !_isRunning || _requestProcessing;
-        });
+        _cv.wait_for(lock, std::chrono::milliseconds(_timeoutMs),
+                     [this]()
+                     {
+                         return !_isRunning || _requestProcessing;
+                     });
 
         _requestProcessing = false;
     }
 }
 
-}
+} // namespace ink

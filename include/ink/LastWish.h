@@ -5,19 +5,22 @@
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
 /**
  * @class LastWish
  *
  * @brief The LastWish class is designed to execute two functions:
- *        one when an object is created (start function), and another when the object goes out of scope and is destroyed (last wish function).
+ *        one when an object is created (start function), and another when the object goes out of scope and is destroyed
+ * (last wish function).
  *
- * This pattern can be useful in scenarios where you want to ensure that certain cleanup or follow-up actions are performed
- * automatically after the execution of a function or at the end of a specific scope.
+ * This pattern can be useful in scenarios where you want to ensure that certain cleanup or follow-up actions are
+ * performed automatically after the execution of a function or at the end of a specific scope.
  */
-class INK_API LastWish {
-public:
+class INK_API LastWish
+{
+  public:
     /**
      * @brief Constructor that executes the initial function immediately.
      *
@@ -28,7 +31,8 @@ public:
      * @param start The function to execute upon construction.
      * @param lastWish The function to execute upon destruction.
      */
-    LastWish(ink::move_only_function<void()> start, ink::move_only_function<void()> lastWish) : _lastWish(std::move(lastWish))
+    LastWish(ink::move_only_function<void()> start, ink::move_only_function<void()> lastWish)
+        : _lastWish(std::move(lastWish))
     {
         start();
     }
@@ -44,7 +48,7 @@ public:
         _lastWish();
     }
 
-private:
+  private:
     /**
      * @brief The function to execute upon destruction.
      *
@@ -53,6 +57,6 @@ private:
     ink::move_only_function<void()> _lastWish;
 };
 
-}
+} // namespace ink
 
 #endif // LASTWISH_H

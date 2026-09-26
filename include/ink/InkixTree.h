@@ -9,42 +9,47 @@
 #include "ink/InkedList.h"
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
-template <typename T>
-class InkixTree {
-public:
-    InkixTree() : _root(std::make_unique<Node>()) {}
+template <typename T> class InkixTree
+{
+  public:
+    InkixTree() : _root(std::make_unique<Node>())
+    {
+    }
 
     // Returns nullptr if key was never inserted.
-    T* get(std::string_view key)
+    T *get(std::string_view key)
     {
-        Node* node = _findNode(key);
+        Node *node = _findNode(key);
         return node ? &node->value : nullptr;
     }
 
-    const T* get(std::string_view key) const
+    const T *get(std::string_view key) const
     {
-        const Node* node = _findNode(key);
+        const Node *node = _findNode(key);
         return node ? &node->value : nullptr;
     }
 
     std::optional<T> getCopy(std::string_view key) const
     {
-        const Node* node = _findNode(key);
-        if (!node) return std::nullopt;
+        const Node *node = _findNode(key);
+        if (!node)
+            return std::nullopt;
         return node->value;
     }
 
     void insert(std::string_view key, T value)
     {
-        Node* current = _root.get();
+        Node *current = _root.get();
 
         while (!key.empty())
         {
             // Find match in first caracter at least
             auto it = std::find_if(current->children.begin(), current->children.end(),
-                                   [&](const auto& node) {
+                                   [&](const auto &node)
+                                   {
                                        return !node->label.empty() && node->label[0] == key[0];
                                    });
 
@@ -55,7 +60,7 @@ public:
                 return;
             }
 
-            Node* child = it->get();
+            Node *child = it->get();
 
             // if there is a match, so, let's see how many char matches we have
             u32 common_len = _get_common_prefix_len(child->label, key);
@@ -72,6 +77,7 @@ public:
                 {
                     child->is_terminal = true;
                     child->value = std::move(value);
+                    return;
                 }
 
                 continue;
@@ -90,7 +96,8 @@ public:
 
             if (common_len < key.size())
             {
-                // if there is more string to insert, push the new leaf, what lacks from key to be child of splitNode too
+                // if there is more string to insert, push the new leaf, what lacks from key to be child of splitNode
+                // too
                 std::unique_ptr<Node> newLeaf = std::make_unique<Node>(key.substr(common_len), std::move(value), true);
                 splitNode->children.push_back(std::move(newLeaf));
             }
@@ -106,15 +113,20 @@ public:
         }
     }
 
-private:
-    struct Node {
+  private:
+    struct Node
+    {
         Node() = default;
 
-        Node(std::string_view _label, const T& _value, bool _is_terminal) :
-            label(_label), value(_value), is_terminal(_is_terminal) {}
+        Node(std::string_view _label, const T &_value, bool _is_terminal)
+            : label(_label), value(_value), is_terminal(_is_terminal)
+        {
+        }
 
-        Node(std::string_view _label, T&& _value, bool _is_terminal) :
-            label(_label), value(std::move(_value)), is_terminal(_is_terminal) {}
+        Node(std::string_view _label, T &&_value, bool _is_terminal)
+            : label(_label), value(std::move(_value)), is_terminal(_is_terminal)
+        {
+        }
 
         std::string label;
         bool is_terminal = false;
@@ -125,7 +137,8 @@ private:
     u32 _get_common_prefix_len(std::string_view a, std::string_view b) const noexcept
     {
         size_t len = 0;
-        while (len < a.size() && len < b.size() && a[len] == b[len]) {
+        while (len < a.size() && len < b.size() && a[len] == b[len])
+        {
             len++;
         }
         return len;
@@ -133,14 +146,15 @@ private:
 
     // Returns nullptr unless `key` was actually inserted as a complete key
     // (i.e. the matched node is terminal)
-    Node* _findNode(std::string_view key)
+    Node *_findNode(std::string_view key)
     {
-        Node* current = _root.get();
+        Node *current = _root.get();
 
         while (!key.empty())
         {
             auto it = std::find_if(current->children.begin(), current->children.end(),
-                                   [&](const auto& node) {
+                                   [&](const auto &node)
+                                   {
                                        return !node->label.empty() && node->label[0] == key[0];
                                    });
 
@@ -150,7 +164,7 @@ private:
                 return nullptr;
             }
 
-            Node* child = it->get();
+            Node *child = it->get();
 
             // chack child's label match with key: Key="images/logo", Child="images/"
             if (key.substr(0, child->label.size()) != child->label)
@@ -167,16 +181,15 @@ private:
         return current->is_terminal ? current : nullptr;
     }
 
-    const Node* _findNode(std::string_view key) const
+    const Node *_findNode(std::string_view key) const
     {
-        return const_cast<InkixTree*>(this)->_findNode(key);
+        return const_cast<InkixTree *>(this)->_findNode(key);
     }
 
-private:
+  private:
     std::unique_ptr<Node> _root;
 };
 
-}
-
+} // namespace ink
 
 #endif // INKIXTREE_H

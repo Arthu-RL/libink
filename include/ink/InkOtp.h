@@ -3,12 +3,15 @@
 
 #include <string>
 
-namespace ink {
+namespace ink
+{
 
-namespace crypt {
+namespace crypt
+{
 
-class OTP {
-public:
+class OTP
+{
+  public:
     /**
      * @brief Generates a one-time pad key for encryption.
      *
@@ -25,9 +28,8 @@ public:
      * @warning std::mt19937 is a fast PRNG, not a cryptographically secure one. This
      * class is suitable for obfuscation/testing, not for protecting real secrets.
      */
-    static std::string build_key(const std::size_t& text_length,
-                          const std::size_t& seed_for_key_gen,
-                          const std::size_t& limit_randint_gen);
+    static std::string build_key(const std::size_t &text_length, const std::size_t &seed_for_key_gen,
+                                 const std::size_t &limit_randint_gen);
 
     /**
      * @brief Encrypts a plaintext message using the one-time pad key.
@@ -39,7 +41,7 @@ public:
      * The encryption is performed using a character-by-character XOR operation between
      * the plaintext and the key.
      */
-    static std::string encrypt(const std::string& text, const std::string& key);
+    static std::string encrypt(const std::string &text, const std::string &key);
 
     /**
      * @brief Decrypts an encrypted message using the one-time pad key.
@@ -51,7 +53,7 @@ public:
      * Decryption is the reverse process of encryption, achieved using the same XOR operation
      * between the encrypted text and the key.
      */
-    static std::string decrypt(const std::string& encrypted_text, const std::string& key);
+    static std::string decrypt(const std::string &encrypted_text, const std::string &key);
 
     /**
      * @brief Reads the content of a file.
@@ -61,7 +63,7 @@ public:
      *
      * This function reads the entire content of the specified file into a string.
      */
-    static std::string read_from_file(const std::string& filename);
+    static std::string read_from_file(const std::string &filename);
 
     /**
      * @brief Writes content std::string to a file.
@@ -72,11 +74,11 @@ public:
      *
      * This function creates or overwrites the specified file with the provided content.
      */
-    static bool write_to_file(const std::string& filename, const std::string& content);
+    static bool write_to_file(const std::string &filename, const std::string &content);
 };
 
-}
+} // namespace crypt
 
-};
+}; // namespace ink
 
 #endif

@@ -6,48 +6,41 @@
 #include "../include/ink/InkAssert.h"
 #include "../include/ink/Inkogger.h"
 
-namespace ink {
+namespace ink
+{
 
-ArgParser::ArgParser(const std::string& description) :
-    _description(description),
-    _added_args()
+ArgParser::ArgParser(const std::string &description) : _description(description), _added_args()
 {
     // Empty
 }
 
-std::string ArgParser::argsToString(i32 argc, char** argv)
+std::string ArgParser::argsToString(i32 argc, char **argv)
 {
     std::string all_args;
-    for (i32 i = 1; i < argc; i++) {
+    for (i32 i = 1; i < argc; i++)
+    {
         all_args += std::string(argv[i]) + " ";
     }
     return all_args;
 }
 
-void ArgParser::add_argument(const std::string& short_id,
-                             const std::string& long_id,
-                             const std::string& desc,
-                             const std::string& help,
-                             const std::string& default_value,
-                             const bool required)
+void ArgParser::add_argument(const std::string &short_id, const std::string &long_id, const std::string &desc,
+                             const std::string &help, const std::string &default_value, const bool required)
 {
     INK_ASSERT_MSG(long_id.contains(desc), "Invalid argument added!");
     INK_ASSERT_MSG(!_added_args.contains(desc), std::format("Cannot add same argument {}.", desc));
     _added_args[desc] = {short_id, long_id, help, default_value, required};
 }
 
-void ArgParser::add_argument(const std::string& long_id,
-                             const std::string& desc,
-                             const std::string& help,
-                             const std::string& default_value,
-                             const bool required)
+void ArgParser::add_argument(const std::string &long_id, const std::string &desc, const std::string &help,
+                             const std::string &default_value, const bool required)
 {
     INK_ASSERT_MSG(long_id.contains(desc), "Invalid argument added!");
     INK_ASSERT_MSG(!_added_args.contains(desc), std::format("Cannot add same argument {}.", desc));
     _added_args[desc] = {"", long_id, help, default_value, required};
 }
 
-std::string ArgParser::extract_value(const std::string& args, size_t pos)
+std::string ArgParser::extract_value(const std::string &args, size_t pos)
 {
     while (pos < args.length() && args[pos] == ' ')
         pos++;
@@ -86,7 +79,7 @@ std::string ArgParser::extract_value(const std::string& args, size_t pos)
     return args.substr(start, end - start);
 }
 
-ink::EnhancedJson ArgParser::parse_args(const std::string& args)
+ink::EnhancedJson ArgParser::parse_args(const std::string &args)
 {
     ink::EnhancedJson parsed_args;
     std::vector<std::string> lacking;
@@ -94,12 +87,12 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
     // process all arguments and collect missing required ones
     for (auto it = _added_args.begin(); it != _added_args.end(); ++it)
     {
-        const std::string& desc = it->first;
-        auto& arg = it->second;
-        std::string& short_id = arg.short_id;
-        std::string& long_id = arg.long_id;
+        const std::string &desc = it->first;
+        auto &arg = it->second;
+        std::string &short_id = arg.short_id;
+        std::string &long_id = arg.long_id;
         // std::string& help = arg.help;
-        std::string& default_value = arg.default_value;
+        std::string &default_value = arg.default_value;
         bool required = arg.required;
 
         size_t long_id_find = args.find(long_id);
@@ -132,8 +125,10 @@ ink::EnhancedJson ArgParser::parse_args(const std::string& args)
     if (!lacking.empty())
     {
         std::string joined;
-        for (size_t i = 0; i < lacking.size(); ++i) {
-            if (i > 0) {
+        for (size_t i = 0; i < lacking.size(); ++i)
+        {
+            if (i > 0)
+            {
                 joined += ", ";
             }
             joined += lacking[i];
@@ -151,7 +146,7 @@ void ArgParser::show_help()
 {
     INK_LOG << _description;
     INK_LOG << "Available arguments:";
-    for (const auto& [desc, arg] : _added_args)
+    for (const auto &[desc, arg] : _added_args)
     {
         std::string arg_line = "  ";
         if (!arg.short_id.empty())
@@ -159,7 +154,8 @@ void ArgParser::show_help()
         arg_line += arg.long_id;
 
         std::string status = arg.required ? "Required" : "Optional";
-        if (!arg.default_value.empty() && !arg.required) {
+        if (!arg.default_value.empty() && !arg.required)
+        {
             status += std::format(" (Default: {})", arg.default_value);
         }
 
@@ -168,4 +164,4 @@ void ArgParser::show_help()
     }
 }
 
-}
+} // namespace ink

@@ -1,23 +1,23 @@
 #include "../include/ink/InkOtp.h"
 
-#include <random>
 #include <chrono>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <random>
+#include <sstream>
 #include <stdexcept>
 
-namespace ink {
+namespace ink
+{
 
-namespace crypt {
+namespace crypt
+{
 
-std::string OTP::build_key(const std::size_t& text_length,
-                              const std::size_t& seed_for_key_gen,
-                              const std::size_t& limit_randint_gen)
+std::string OTP::build_key(const std::size_t &text_length, const std::size_t &seed_for_key_gen,
+                           const std::size_t &limit_randint_gen)
 {
     std::random_device rd;
-    std::seed_seq seed{rd(), rd(), rd(), rd(),
-                        static_cast<unsigned>(seed_for_key_gen)};
+    std::seed_seq seed{rd(), rd(), rd(), rd(), static_cast<unsigned>(seed_for_key_gen)};
     std::mt19937 gen(seed);
     std::uniform_int_distribution<int> dist(1, static_cast<int>(limit_randint_gen));
 
@@ -25,15 +25,16 @@ std::string OTP::build_key(const std::size_t& text_length,
 
     for (std::size_t i = 0; i < text_length; ++i)
     {
-        key[i] = static_cast<char>(dist(gen)*seed_for_key_gen%256);
+        key[i] = static_cast<char>(dist(gen) * seed_for_key_gen % 256);
     }
 
     return key;
 }
 
-std::string OTP::encrypt(const std::string& text, const std::string& key)
+std::string OTP::encrypt(const std::string &text, const std::string &key)
 {
-    if (key.size() < text.size()) {
+    if (key.size() < text.size())
+    {
         throw std::invalid_argument("OTP::encrypt: key must be at least as long as text");
     }
 
@@ -46,9 +47,10 @@ std::string OTP::encrypt(const std::string& text, const std::string& key)
     return encrypted_text;
 }
 
-std::string OTP::decrypt(const std::string& encrypted_text, const std::string& key)
+std::string OTP::decrypt(const std::string &encrypted_text, const std::string &key)
 {
-    if (key.size() < encrypted_text.size()) {
+    if (key.size() < encrypted_text.size())
+    {
         throw std::invalid_argument("OTP::decrypt: key must be at least as long as encrypted_text");
     }
 
@@ -61,7 +63,7 @@ std::string OTP::decrypt(const std::string& encrypted_text, const std::string& k
     return decrypted_text;
 }
 
-std::string OTP::read_from_file(const std::string& filename)
+std::string OTP::read_from_file(const std::string &filename)
 {
     // Binary mode: this reads OTP-encrypted content, which is arbitrary
     // bytes, not text -- text mode would let CRLF translation (on
@@ -77,7 +79,7 @@ std::string OTP::read_from_file(const std::string& filename)
     return oss.str();
 }
 
-bool OTP::write_to_file(const std::string& filename, const std::string& content)
+bool OTP::write_to_file(const std::string &filename, const std::string &content)
 {
     std::ofstream outfile(filename, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!outfile.is_open())
@@ -89,7 +91,6 @@ bool OTP::write_to_file(const std::string& filename, const std::string& content)
     return true;
 }
 
+} // namespace crypt
 
-}
-
-}
+} // namespace ink
