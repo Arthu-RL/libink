@@ -125,20 +125,25 @@
 /*====================
  * TYPE DEFINITIONS
  *====================*/
+#include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 
-using i8 = signed char;
-using i16 = signed short;
-using i32 = signed int;
-using i64 = signed long long;
+using i8 = std::int8_t;
+using i16 = std::int16_t;
+using i32 = std::int32_t;
+using i64 = std::int64_t;
 
-using u8 = unsigned char;
-using u16 = unsigned short;
-using u32 = unsigned int;
-using u64 = unsigned long long;
+using u8 = std::uint8_t;
+using u16 = std::uint16_t;
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
 
-using usize = size_t;
+// 32-bit boolean storage: zero is false, nonzero is true. Prefer bool for ordinary logic.
+using b32 = u32;
+
+using usize = std::size_t;
 using isize = std::ptrdiff_t;
 
 using f32 = float;
@@ -189,6 +194,9 @@ template <typename Sig> using move_only_function = std::function<Sig>;
 /*====================
  * MEMORY OPERATIONS
  *====================*/
+#define INK_KIB_TO_BYTES(n) ((n) << 10)
+#define INK_MIB_TO_BYTES(n) ((n) << 20)
+#define INK_GIB_TO_BYTES(n) ((n) << 30)
 #define INK_ZERO_MEMORY(ptr, size) std::memset((ptr), 0, (size))
 #define INK_ALIGN_SIZE(size, alignment) (((size) + ((alignment) - 1)) & ~((alignment) - 1))
 
