@@ -17,6 +17,8 @@ A modern C++ utility library: allocators, containers, concurrency, and a handful
 
 ## Installation
 
+C++ formatting and static analysis: [local commands and CI scope](docs/code-quality.md).
+
 ```sh
 git clone https://github.com/Arthu-RL/libink.git
 

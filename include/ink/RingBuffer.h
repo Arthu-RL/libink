@@ -7,32 +7,34 @@
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
-class INK_API RingBuffer {
-public:
+class INK_API RingBuffer
+{
+  public:
     explicit RingBuffer(size_t capacity = 8192);
 
     ~RingBuffer() = default;
 
     // Non-copyable
-    RingBuffer(const RingBuffer&) = delete;
-    RingBuffer& operator=(const RingBuffer&) = delete;
+    RingBuffer(const RingBuffer &) = delete;
+    RingBuffer &operator=(const RingBuffer &) = delete;
 
-    RingBuffer(RingBuffer&&) noexcept = default;
-    RingBuffer& operator=(RingBuffer&&) noexcept = default;
+    RingBuffer(RingBuffer &&) noexcept = default;
+    RingBuffer &operator=(RingBuffer &&) noexcept = default;
 
     // Read data from the buffer
-    size_t read(char* dest, size_t maxLen);
+    size_t read(char *dest, size_t maxLen);
     // Write data to the buffer
-    size_t write(const char* data, size_t len);
+    size_t write(const char *data, size_t len);
     size_t write(std::string_view sv);
-    size_t write(const std::string& s);
+    size_t write(const std::string &s);
 
     // Get a contiguous read buffer (for zero-copy operations)
-    const char* getReadBuffer(size_t& availableData) const;
+    const char *getReadBuffer(size_t &availableData) const;
     // Get a contiguous write buffer (for zero-copy operations)
-    char* getWriteBuffer(size_t& availableSpace);
+    char *getWriteBuffer(size_t &availableSpace);
     // Advance read position after reading data
     void advanceReadPos(size_t len);
     // Advance write position after writing data
@@ -41,12 +43,24 @@ public:
     void clear();
 
     // Utility methods
-    size_t size() const { return _size; }
-    size_t capacity() const { return _capacity; }
-    bool empty() const { return _size == 0; }
-    bool full() const { return _size == _capacity; }
+    size_t size() const
+    {
+        return _size;
+    }
+    size_t capacity() const
+    {
+        return _capacity;
+    }
+    bool empty() const
+    {
+        return _size == 0;
+    }
+    bool full() const
+    {
+        return _size == _capacity;
+    }
 
-private:
+  private:
     std::vector<char> _buffer;
     size_t _capacity;
     size_t _readPos;
@@ -54,6 +68,6 @@ private:
     size_t _size;
 };
 
-}
+} // namespace ink
 
 #endif // RINGBUFFER_H

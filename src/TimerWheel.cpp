@@ -2,13 +2,11 @@
 
 #include "../include/ink/utils.h"
 
-namespace ink {
+namespace ink
+{
 
-TimerWheel::TimerWheel(u32 ticksToLive, u32 tickIntervalMs) :
-    _ticksToLive(ticksToLive),
-    _currentSlot(0),
-    _tickMs(tickIntervalMs),
-    _lastTickMs(ink::utils::nowMillis())
+TimerWheel::TimerWheel(u32 ticksToLive, u32 tickIntervalMs)
+    : _ticksToLive(ticksToLive), _currentSlot(0), _tickMs(tickIntervalMs), _lastTickMs(ink::utils::nowMillis())
 {
     u32 requiredSize = _ticksToLive + 1;
     // Get power of 2 number next tp requiredSize
@@ -22,7 +20,7 @@ TimerWheel::TimerWheel(u32 ticksToLive, u32 tickIntervalMs) :
     _wheelMask = power - 1;
 }
 
-void TimerWheel::update(TimerNode* node)
+void TimerWheel::update(TimerNode *node)
 {
     // Unlink from old position (if any)
     unlink(node);
@@ -44,15 +42,17 @@ void TimerWheel::update(TimerNode* node)
     _wheel[newSlot] = node;
 }
 
-void TimerWheel::unlink(TimerNode* node)
+void TimerWheel::unlink(TimerNode *node)
 {
     if (!node->prev && !node->next && _wheel[node->slotIndex] != node)
     {
         return; // Not linked
     }
 
-    if (node->prev) node->prev->next = node->next;
-    if (node->next) node->next->prev = node->prev;
+    if (node->prev)
+        node->prev->next = node->next;
+    if (node->next)
+        node->next->prev = node->prev;
 
     // If this was the head, update the head
     if (_wheel[node->slotIndex] == node)
@@ -64,10 +64,10 @@ void TimerWheel::unlink(TimerNode* node)
     node->next = nullptr;
 }
 
-TimerNode* TimerWheel::tick()
+TimerNode *TimerWheel::tick()
 {
     // Get the bucket at the current hand
-    TimerNode* expiredList = _wheel[_currentSlot];
+    TimerNode *expiredList = _wheel[_currentSlot];
     _wheel[_currentSlot] = nullptr;
 
     _currentSlot = (_currentSlot + 1) & _wheelMask;
@@ -76,7 +76,7 @@ TimerNode* TimerWheel::tick()
     return expiredList;
 }
 
-u64 TimerWheel::timeToNextTickMillis(const u64& nowMs) const
+u64 TimerWheel::timeToNextTickMillis(const u64 &nowMs) const
 {
     u64 elapsed = nowMs - _lastTickMs;
 
@@ -86,6 +86,4 @@ u64 TimerWheel::timeToNextTickMillis(const u64& nowMs) const
     return static_cast<u64>(_tickMs - elapsed);
 }
 
-
-}
-
+} // namespace ink

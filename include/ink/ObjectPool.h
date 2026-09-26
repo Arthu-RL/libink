@@ -7,7 +7,8 @@
 
 #include "ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
 /**
  * @class ObjectPool
@@ -27,72 +28,79 @@ namespace ink {
  * @tparam T The type of object to be stored in the pool.
  * @tparam iSize The initial number of objects to allocate in the first slab.
  */
-template<typename T, usize iSize>
-class ObjectPool
+template <typename T, usize iSize> class ObjectPool
 {
-public:
-    ObjectPool() : _currentCapacity(iSize) {
+  public:
+    ObjectPool() : _currentCapacity(iSize)
+    {
         expand(_currentCapacity);
     }
 
     // avoid double-freeing the memory blocks
-    ObjectPool(const ObjectPool&) = delete;
-    ObjectPool& operator=(const ObjectPool&) = delete;
+    ObjectPool(const ObjectPool &) = delete;
+    ObjectPool &operator=(const ObjectPool &) = delete;
 
-    ~ObjectPool() {
-        for (void* block : _allBlocks) {
+    ~ObjectPool()
+    {
+        for (void *block : _allBlocks)
+        {
             ::operator delete[](block, std::align_val_t(alignof(T)));
         }
     }
 
     // Acquires a free slot and constructs a T in place with the given
     // constructor arguments. O(1) amortized (occasionally expands the pool).
-    template<typename... Args>
-    [[nodiscard]] T* acquire(Args&&... args) {
-        if (_freeList.empty()) 
+    template <typename... Args> [[nodiscard]] T *acquire(Args &&...args)
+    {
+        if (_freeList.empty())
         {
             _currentCapacity *= 2;
             expand(_currentCapacity);
         }
-        T* slot = _freeList.back();
+        T *slot = _freeList.back();
         _freeList.pop_back();
-        return ::new (static_cast<void*>(slot)) T(std::forward<Args>(args)...);
+        return ::new (static_cast<void *>(slot)) T(std::forward<Args>(args)...);
     }
 
     // Destroys obj and returns its storage to the free list. obj must have
     // been returned by acquire() on this pool and not already released.
-    void release(T* obj) {
+    void release(T *obj)
+    {
         obj->~T();
         _freeList.push_back(obj);
     }
 
     // Get fisrt block memory region
-    void* getRawBuffer() {
-        if (_allBlocks.empty()) return nullptr;
-        return _allBlocks[_allBlocks.size()-1];
+    void *getRawBuffer()
+    {
+        if (_allBlocks.empty())
+            return nullptr;
+        return _allBlocks[_allBlocks.size() - 1];
     }
 
-    size_t getRawBufferSize() {
+    size_t getRawBufferSize()
+    {
         return _currentCapacity * sizeof(T);
     }
 
-private:
-    void expand(usize count) {
+  private:
+    void expand(usize count)
+    {
         // Enforce the alignas(32) requirement when allocating the raw slab
         // Make a big block of T* type space
-        T* block = static_cast<T*>(::operator new[](count * sizeof(T), std::align_val_t(alignof(T))));
+        T *block = static_cast<T *>(::operator new[](count * sizeof(T), std::align_val_t(alignof(T))));
         _allBlocks.push_back(block);
 
         // Push in reverse order so that 'acquire()' pops sequential addresses
         // Insert each T* space of the block
-        for (isize i = count - 1; i >= 0; --i) 
+        for (usize i = count; i > 0; --i)
         {
-            _freeList.push_back(&block[i]);
+            _freeList.push_back(&block[i - 1]);
         }
     }
 
-    std::vector<T*> _freeList;
-    std::vector<void*> _allBlocks;
+    std::vector<T *> _freeList;
+    std::vector<void *> _allBlocks;
     usize _currentCapacity;
 };
 

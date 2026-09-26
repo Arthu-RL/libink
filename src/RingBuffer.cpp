@@ -1,18 +1,14 @@
 #include "../include/ink/RingBuffer.h"
 
-namespace ink {
+namespace ink
+{
 
-RingBuffer::RingBuffer(size_t capacity) :
-    _buffer(capacity),
-    _capacity(capacity),
-    _readPos(0),
-    _writePos(0),
-    _size(0)
+RingBuffer::RingBuffer(size_t capacity) : _buffer(capacity), _capacity(capacity), _readPos(0), _writePos(0), _size(0)
 {
     // Empty
 }
 
-size_t RingBuffer::read(char* dest, size_t maxLen)
+size_t RingBuffer::read(char *dest, size_t maxLen)
 {
     if (maxLen == 0 || _size == 0)
         return 0;
@@ -37,7 +33,7 @@ size_t RingBuffer::read(char* dest, size_t maxLen)
     return toRead;
 }
 
-size_t RingBuffer::write(const char* data, size_t len)
+size_t RingBuffer::write(const char *data, size_t len)
 {
     if (len == 0 || _size == _capacity)
         return 0;
@@ -49,7 +45,7 @@ size_t RingBuffer::write(const char* data, size_t len)
 
     memcpy(_buffer.data() + _writePos, data, first);
 
-     // Wrap-around chunk
+    // Wrap-around chunk
     if (toWrite > first)
         memcpy(_buffer.data(), data + first, toWrite - first);
 
@@ -66,14 +62,15 @@ size_t RingBuffer::write(std::string_view sv)
     return write(sv.data(), sv.size());
 }
 
-size_t RingBuffer::write(const std::string& s)
+size_t RingBuffer::write(const std::string &s)
 {
     return write(s.data(), s.size());
 }
 
-const char* RingBuffer::getReadBuffer(size_t& availableData) const
+const char *RingBuffer::getReadBuffer(size_t &availableData) const
 {
-    if (_size == 0) {
+    if (_size == 0)
+    {
         availableData = 0;
         return nullptr;
     }
@@ -86,9 +83,10 @@ const char* RingBuffer::getReadBuffer(size_t& availableData) const
     return _buffer.data() + _readPos;
 }
 
-char* RingBuffer::getWriteBuffer(size_t& availableSpace)
+char *RingBuffer::getWriteBuffer(size_t &availableSpace)
 {
-    if (_size == _capacity) {
+    if (_size == _capacity)
+    {
         availableSpace = 0;
         return nullptr;
     }
@@ -124,4 +122,4 @@ void RingBuffer::clear()
     _size = 0;
 }
 
-}
+} // namespace ink

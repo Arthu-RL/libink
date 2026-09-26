@@ -7,22 +7,25 @@
 #include <time.h>
 #endif
 
-namespace ink {
+namespace ink
+{
 
-namespace utils {
+namespace utils
+{
 
 constexpr usize MAX_CHUNKS = 4096;
 
-std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
+std::expected<std::string, ink_result_t> exec_command(const std::string &cmd)
 {
     // popen/pclose are POSIX; MSVC's CRT exposes the same pipe-a-child-process
     // behavior under the _popen/_pclose spelling instead.
 #if defined(INK_PLATFORM_WINDOWS)
-    FILE* pipe = _popen(cmd.c_str(), "r");
+    FILE *pipe = _popen(cmd.c_str(), "r");
 #else
-    FILE* pipe = popen(cmd.data(), "r");
+    FILE *pipe = popen(cmd.data(), "r");
 #endif
-    if (!pipe) {
+    if (!pipe)
+    {
         return std::unexpected(ink_result_t::ERROR_IO);
     }
 
@@ -32,7 +35,8 @@ std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
     char buffer[MAX_CHUNKS];
 
     size_t bytesRead;
-    while ((bytesRead = fread(buffer, 1, MAX_CHUNKS, pipe)) > 0) {
+    while ((bytesRead = fread(buffer, 1, MAX_CHUNKS, pipe)) > 0)
+    {
         result.append(buffer, bytesRead);
     }
 
@@ -47,7 +51,8 @@ std::expected<std::string, ink_result_t> exec_command(const std::string& cmd)
 
 i32 cto_int(char c) noexcept
 {
-    if (c >= '0' && c <= '9') {
+    if (c >= '0' && c <= '9')
+    {
         return c - '0';
     }
     return -1;
@@ -57,7 +62,8 @@ std::expected<usize, ink_result_t> string_int(std::string_view s) noexcept
 {
     usize result = 0;
     const auto parsed = std::from_chars(s.data(), s.data() + s.size(), result);
-    if (parsed.ec != std::errc{}) {
+    if (parsed.ec != std::errc{})
+    {
         return std::unexpected(ink_result_t::ERROR_INVALID_PARAM);
     }
     return result;
@@ -84,11 +90,10 @@ u64 nowMillis()
     timespec ts;
     clock_gettime(MONOTONIC_CLOCK, &ts);
 
-    return static_cast<u64>(ts.tv_sec) * 1000
-           + static_cast<u64>(ts.tv_nsec) / 1'000'000;
+    return static_cast<u64>(ts.tv_sec) * 1000 + static_cast<u64>(ts.tv_nsec) / 1'000'000;
 #endif
 }
 
-}
+} // namespace utils
 
-}
+} // namespace ink

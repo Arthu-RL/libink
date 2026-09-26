@@ -5,38 +5,40 @@
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
-struct TimerNode {
-    TimerNode* prev = nullptr;
-    TimerNode* next = nullptr;
+struct TimerNode
+{
+    TimerNode *prev = nullptr;
+    TimerNode *next = nullptr;
     u32 slotIndex = 0;
 };
 
-class TimerWheel {
-public:
+class TimerWheel
+{
+  public:
     // Resolution: 1 tick per second (or 100ms)
     // Size: 60 slots (for 60 seconds timeout)
     TimerWheel(u32 ticksToLive = 60, u32 tickIntervalMs = 1000);
 
     // O(1) - Add or Update session
-    void update(TimerNode* node);
+    void update(TimerNode *node);
 
     // O(1) - Remove session (e.g., on explicit close)
-    void unlink(TimerNode* node);
+    void unlink(TimerNode *node);
 
     // O(1) Batch - Process timeouts
     // Returns a list of expired nodes to be closed
-    TimerNode* tick();
+    TimerNode *tick();
 
-    template <typename Fn>
-    void processExpired(Fn&& fn)
+    template <typename Fn> void processExpired(Fn &&fn)
     {
-        TimerNode* node = tick();
+        TimerNode *node = tick();
 
         while (node)
         {
-            TimerNode* next = node->next;
+            TimerNode *next = node->next;
 
             node->prev = nullptr;
             node->next = nullptr;
@@ -47,13 +49,16 @@ public:
         }
     }
 
-    u64 getNextTickTime() const { return _lastTickMs + _tickMs; }
+    u64 getNextTickTime() const
+    {
+        return _lastTickMs + _tickMs;
+    }
 
-    u64 timeToNextTickMillis(const u64& nowMs) const;
+    u64 timeToNextTickMillis(const u64 &nowMs) const;
 
-private:
+  private:
     u32 _ticksToLive;
-    std::vector<TimerNode*> _wheel;
+    std::vector<TimerNode *> _wheel;
     u32 _wheelMask;
     u32 _currentSlot;
 
@@ -61,6 +66,6 @@ private:
     u64 _lastTickMs;
 };
 
-}
+} // namespace ink
 
 #endif // TIMERWHEEL_H

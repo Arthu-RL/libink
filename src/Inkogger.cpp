@@ -1,7 +1,7 @@
 #include "../include/ink/Inkogger.h"
-#include <format>
 #include <chrono>
 #include <cstring>
+#include <format>
 #include <iterator>
 
 #if defined(INK_PLATFORM_ANDROID)
@@ -13,9 +13,11 @@
 #include <unistd.h>
 #endif
 
-namespace ink {
+namespace ink
+{
 
-namespace {
+namespace
+{
 
 #if defined(INK_PLATFORM_ANDROID)
 // Maps INK's LogLevel to the Android NDK log priority so messages are
@@ -25,15 +27,22 @@ constexpr android_LogPriority toAndroidPriority(LogLevel level) noexcept
 {
     switch (level)
     {
-        case LogLevel::FATAL:   return ANDROID_LOG_FATAL;
-        case LogLevel::ERROR:   return ANDROID_LOG_ERROR;
-        case LogLevel::WARN:    return ANDROID_LOG_WARN;
-        case LogLevel::INFO:    return ANDROID_LOG_INFO;
-        case LogLevel::DEBUG:   return ANDROID_LOG_DEBUG;
-        case LogLevel::VERBOSE:
-        case LogLevel::TRACE:   return ANDROID_LOG_VERBOSE;
-        case LogLevel::OFF:
-        default:                return ANDROID_LOG_INFO;
+    case LogLevel::FATAL:
+        return ANDROID_LOG_FATAL;
+    case LogLevel::ERROR:
+        return ANDROID_LOG_ERROR;
+    case LogLevel::WARN:
+        return ANDROID_LOG_WARN;
+    case LogLevel::INFO:
+        return ANDROID_LOG_INFO;
+    case LogLevel::DEBUG:
+        return ANDROID_LOG_DEBUG;
+    case LogLevel::VERBOSE:
+    case LogLevel::TRACE:
+        return ANDROID_LOG_VERBOSE;
+    case LogLevel::OFF:
+    default:
+        return ANDROID_LOG_INFO;
     }
 }
 #endif
@@ -51,11 +60,11 @@ constexpr bool requiresImmediateFlush(LogLevel level) noexcept
 thread_local std::string Inkogger::t_MessageBuffer;
 thread_local std::string Inkogger::t_PlainMessageBuffer;
 
-Inkogger::Inkogger(const std::string& name)
-    : _name(name), _level(LogLevel::INFO), _useColors(true), _logToFile(false)
+Inkogger::Inkogger(const std::string &name) : _name(name), _level(LogLevel::INFO), _useColors(true), _logToFile(false)
 {
     // Pre-allocate to prevent formatting reallocations
-    if (t_MessageBuffer.capacity() < 2048) {
+    if (t_MessageBuffer.capacity() < 2048)
+    {
         t_MessageBuffer.reserve(2048);
     }
 }
@@ -65,7 +74,7 @@ Inkogger::~Inkogger()
     closeLogFile();
 }
 
-void Inkogger::setName(const std::string& name)
+void Inkogger::setName(const std::string &name)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _name = name;
@@ -83,17 +92,19 @@ bool Inkogger::isEnabled(LogLevel level) const noexcept
 
 std::string_view Inkogger::getColorForLevel(LogLevel level) const noexcept
 {
-    if (level >= LogLevel::COUNT) return "";
+    if (level >= LogLevel::COUNT)
+        return "";
     return MAP_COLORS_FOR_LEVEL[std::to_underlying(level)].color;
 }
 
 std::string_view Inkogger::getLevelString(LogLevel level) const noexcept
 {
-    if (level >= LogLevel::COUNT) return "UNKNOWN";
+    if (level >= LogLevel::COUNT)
+        return "UNKNOWN";
     return MAP_COLORS_FOR_LEVEL[std::to_underlying(level)].desc;
 }
 
-void Inkogger::appendCurrentTimestamp(std::string& buffer) const
+void Inkogger::appendCurrentTimestamp(std::string &buffer) const
 {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
@@ -107,24 +118,27 @@ void Inkogger::appendCurrentTimestamp(std::string& buffer) const
 #endif
 
     // Format directly into the provided buffer (Zero new string allocations)
-    std::format_to(std::back_inserter(buffer), "{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}",
-                   timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
-                   timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec, ms.count());
+    std::format_to(std::back_inserter(buffer), "{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}", timeinfo.tm_year + 1900,
+                   timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec,
+                   ms.count());
 }
 
-std::string_view Inkogger::extractFilename(const char* path) const noexcept
+std::string_view Inkogger::extractFilename(const char *path) const noexcept
 {
-    if (!path) return "";
-    const char* lastSlash = std::strrchr(path, '/');
-    const char* lastBackslash = std::strrchr(path, '\\');
+    if (!path)
+        return "";
+    const char *lastSlash = std::strrchr(path, '/');
+    const char *lastBackslash = std::strrchr(path, '\\');
 
-    if (lastSlash) return lastSlash + 1;
-    if (lastBackslash) return lastBackslash + 1;
+    if (lastSlash)
+        return lastSlash + 1;
+    if (lastBackslash)
+        return lastBackslash + 1;
     return path;
 }
 
 void Inkogger::writeToPlatformConsole(LogLevel level, std::string_view plainMessage,
-                                       std::string_view coloredMessage) const
+                                      std::string_view coloredMessage) const
 {
 #if defined(INK_PLATFORM_ANDROID)
     INK_UNUSED(coloredMessage);
@@ -136,8 +150,7 @@ void Inkogger::writeToPlatformConsole(LogLevel level, std::string_view plainMess
     if (!body.empty() && body.back() == '\n')
         body.remove_suffix(1);
 
-    __android_log_print(toAndroidPriority(level), _name.c_str(), "%.*s",
-                         static_cast<int>(body.size()), body.data());
+    __android_log_print(toAndroidPriority(level), _name.c_str(), "%.*s", static_cast<int>(body.size()), body.data());
 #else
     INK_UNUSED(plainMessage);
 
@@ -150,7 +163,7 @@ void Inkogger::writeToPlatformConsole(LogLevel level, std::string_view plainMess
 #endif
 }
 
-void Inkogger::log(LogLevel level, std::string_view message, const char* file, u32 line)
+void Inkogger::log(LogLevel level, std::string_view message, const char *file, u32 line)
 {
     // Clear thread-local buffer (resets size to 0, keeps memory allocated)
     t_MessageBuffer.clear();
@@ -162,14 +175,16 @@ void Inkogger::log(LogLevel level, std::string_view message, const char* file, u
 
         writeToPlatformConsole(LogLevel::OFF, t_MessageBuffer, t_MessageBuffer);
 
-        if (_logToFile.load(std::memory_order_relaxed)) {
+        if (_logToFile.load(std::memory_order_relaxed))
+        {
             writeToFile(t_MessageBuffer, /*flushNow=*/true);
         }
         return;
     }
 
     // Double check just in case, though macros handle this
-    if (!isEnabled(level)) return;
+    if (!isEnabled(level))
+        return;
 
     const bool useColors = _useColors.load(std::memory_order_relaxed);
     const bool logToFile = _logToFile.load(std::memory_order_relaxed);
@@ -181,10 +196,10 @@ void Inkogger::log(LogLevel level, std::string_view message, const char* file, u
     t_MessageBuffer.push_back('[');
     appendCurrentTimestamp(t_MessageBuffer);
 
-    std::format_to(std::back_inserter(t_MessageBuffer), "] {}[{}]{} [{}]: {}",
-                   color, levelStr, reset, _name, message);
+    std::format_to(std::back_inserter(t_MessageBuffer), "] {}[{}]{} [{}]: {}", color, levelStr, reset, _name, message);
 
-    if (file != nullptr) {
+    if (file != nullptr)
+    {
         std::format_to(std::back_inserter(t_MessageBuffer), " ({}:{})", extractFilename(file), line);
     }
 
@@ -209,7 +224,7 @@ void Inkogger::log(LogLevel level, std::string_view message, const char* file, u
         appendCurrentTimestamp(t_PlainMessageBuffer);
         std::format_to(std::back_inserter(t_PlainMessageBuffer), "] [{}] [{}]: {}", levelStr, _name, message);
 
-        if (file != nullptr) 
+        if (file != nullptr)
         {
             std::format_to(std::back_inserter(t_PlainMessageBuffer), " ({}:{})", extractFilename(file), line);
         }
@@ -225,22 +240,24 @@ void Inkogger::log(LogLevel level, std::string_view message, const char* file, u
         writeToFile(plainView, requiresImmediateFlush(level));
 }
 
-bool Inkogger::openLogFile(const std::string& filepath)
+bool Inkogger::openLogFile(const std::string &filepath)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
 #if INK_LOGGER_USE_OFSTREAM
-    if (_fileStream.is_open()) _fileStream.close();
+    if (_fileStream.is_open())
+        _fileStream.close();
     _fileStream.open(filepath, std::ios::out | std::ios::app);
     return _fileStream.is_open();
 #else
     const int newFd = ::open(filepath.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (newFd < 0) return false;
+    if (newFd < 0)
+        return false;
 
     const int oldFd = _fileFd.exchange(newFd, std::memory_order_acq_rel);
     if (oldFd >= 0)
         ::close(oldFd);
- 
+
     return true;
 #endif
 }
@@ -250,14 +267,14 @@ void Inkogger::closeLogFile()
     std::lock_guard<std::mutex> lock(_mutex);
 
 #if INK_LOGGER_USE_OFSTREAM
-    if (_fileStream.is_open()) 
+    if (_fileStream.is_open())
     {
         _fileStream.flush();
         _fileStream.close();
     }
 #else
     const int oldFd = _fileFd.exchange(-1, std::memory_order_acq_rel);
-    if (oldFd >= 0) 
+    if (oldFd >= 0)
         ::close(oldFd);
 
 #endif
@@ -267,7 +284,7 @@ void Inkogger::writeToFile(std::string_view data, bool flushNow) const
 {
 #if INK_LOGGER_USE_OFSTREAM
     std::lock_guard<std::mutex> lock(_mutex);
-    if (_fileStream.is_open()) 
+    if (_fileStream.is_open())
     {
         _fileStream.write(data.data(), static_cast<std::streamsize>(data.size()));
         if (flushNow)
@@ -277,37 +294,37 @@ void Inkogger::writeToFile(std::string_view data, bool flushNow) const
     INK_UNUSED(flushNow); // write() has no userspace buffer to flush
 
     const int fd = _fileFd.load(std::memory_order_acquire);
-    if (fd < 0) 
+    if (fd < 0)
         return;
 
     std::size_t written = 0;
-    while (written < data.size()) 
+    while (written < data.size())
     {
         const ssize_t n = ::write(fd, data.data() + written, data.size() - written);
-        if (n <= 0) 
+        if (n <= 0)
             break;
         written += static_cast<std::size_t>(n);
     }
 #endif
 }
 
-void Inkogger::setLogToFile(const std::string& filepath)
+void Inkogger::setLogToFile(const std::string &filepath)
 {
-    if (filepath.empty()) 
+    if (filepath.empty())
     {
         closeLogFile();
         _logToFile.store(false, std::memory_order_relaxed);
         return;
     }
 
-    if (openLogFile(filepath)) 
+    if (openLogFile(filepath))
     {
         _logToFile.store(true, std::memory_order_relaxed);
-    } 
-    else 
+    }
+    else
     {
         _logToFile.store(false, std::memory_order_relaxed);
-        const char* errorMsg = "Failed to open log file: ";
+        const char *errorMsg = "Failed to open log file: ";
         fwrite(errorMsg, 1, strlen(errorMsg), stderr);
         fwrite(filepath.c_str(), 1, filepath.size(), stderr);
         fwrite("\n", 1, 1, stderr);
@@ -320,20 +337,23 @@ void Inkogger::setUseColors(bool useColors) noexcept
 }
 
 // LogManager Implementation
-LogManager::LogManager()
-    : _globalLevel(LogLevel::INFO), _globalUseColors(true) {}
+LogManager::LogManager() : _globalLevel(LogLevel::INFO), _globalUseColors(true)
+{
+}
 
-std::shared_ptr<IInkogger> LogManager::getLogger(const std::string& name)
+std::shared_ptr<IInkogger> LogManager::getLogger(const std::string &name)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
-    if (auto it = _loggers.find(name); it != _loggers.end()) {
+    if (auto it = _loggers.find(name); it != _loggers.end())
+    {
         return it->second;
     }
 
     auto logger = std::make_shared<Inkogger>(name);
     logger->setLevel(_globalLevel);
-    if (!_globalFilePath.empty()) logger->setLogToFile(_globalFilePath);
+    if (!_globalFilePath.empty())
+        logger->setLogToFile(_globalFilePath);
     logger->setUseColors(_globalUseColors);
 
     _loggers[name] = logger;
@@ -346,26 +366,29 @@ std::shared_ptr<IInkogger> LogManager::getCoreLogger()
     // actually runs the initializer, so the plain (non-atomic) read of
     // _coreLoggerCache below is race-free even on the very first call from
     // multiple threads.
-    std::call_once(_coreLoggerOnceFlag, [this]() {
-        _coreLoggerCache = getLogger("INK");
-    });
+    std::call_once(_coreLoggerOnceFlag,
+                   [this]()
+                   {
+                       _coreLoggerCache = getLogger("INK");
+                   });
     return _coreLoggerCache;
 }
 
-void LogManager::setGlobalLevel(LogLevel level) {
+void LogManager::setGlobalLevel(LogLevel level)
+{
     std::lock_guard<std::mutex> lock(_mutex);
     _globalLevel = level;
-    for (auto& [name, logger] : _loggers) 
+    for (auto &[name, logger] : _loggers)
     {
         logger->setLevel(level);
     }
 }
 
-void LogManager::setLogToFile(const std::string& filepath)
+void LogManager::setLogToFile(const std::string &filepath)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _globalFilePath = filepath;
-    for (auto& [name, logger] : _loggers) 
+    for (auto &[name, logger] : _loggers)
     {
         logger->setLogToFile(filepath);
     }
@@ -375,7 +398,7 @@ void LogManager::setUseColors(bool useColors)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _globalUseColors = useColors;
-    for (auto& [name, logger] : _loggers) 
+    for (auto &[name, logger] : _loggers)
     {
         logger->setUseColors(useColors);
     }

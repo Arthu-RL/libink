@@ -1,27 +1,29 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
-#include <vector>
+#include <condition_variable>
+#include <functional>
+#include <future>
+#include <mutex>
 #include <queue>
 #include <thread>
-#include <future>
-#include <functional>
-#include <mutex>
-#include <condition_variable>
+#include <vector>
 
 #include "ink/ink_base.hpp"
 
-namespace ink {
+namespace ink
+{
 
-class INK_API ThreadPool {
-public:
+class INK_API ThreadPool
+{
+  public:
     // max_workers must be >= 1: with zero workers, submitted tasks would
     // queue forever and their futures would never resolve.
     explicit ThreadPool(size_t max_workers);
     ~ThreadPool();
 
     template <typename Function, typename... Args>
-    [[nodiscard]] std::future<std::invoke_result_t<Function, Args...>> submit(Function&& f, Args&&... args)
+    [[nodiscard]] std::future<std::invoke_result_t<Function, Args...>> submit(Function &&f, Args &&...args)
     {
         using ReturnType = std::invoke_result_t<Function, Args...>;
 
@@ -29,23 +31,27 @@ public:
             [fn = std::forward<Function>(f), tpl = std::make_tuple(std::forward<Args>(args)...)]() mutable -> ReturnType
             {
                 return std::apply(std::move(fn), std::move(tpl));
-            }
-        );
+            });
 
         std::future<ReturnType> res = task->get_future();
 
         {
             std::lock_guard<std::mutex> lock(_tpMutex);
-            if (_stop) throw std::runtime_error("ThreadPool is stopped");
+            if (_stop)
+                throw std::runtime_error("ThreadPool is stopped");
 
-            _tasks.push([task]() { (*task)(); });
+            _tasks.push(
+                [task]()
+                {
+                    (*task)();
+                });
         }
 
         _condition.notify_one();
         return res;
     }
 
-private:
+  private:
     std::vector<std::thread> _workers;
     std::queue<ink::move_only_function<void()>> _tasks;
 
@@ -54,6 +60,6 @@ private:
     bool _stop;
 };
 
-}
+} // namespace ink
 
 #endif

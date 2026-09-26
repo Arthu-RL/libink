@@ -1,8 +1,8 @@
 #include <chrono>
-#include <thread>
 #include <cstdio>
 #include <cstdlib>
 #include <optional>
+#include <thread>
 #include <variant>
 
 #include "../include/ink/ink.hpp"
@@ -10,14 +10,17 @@
 // ============================================================================
 // Minimal assertion-based test harness (no external test framework dependency)
 // ============================================================================
-namespace test {
+namespace test
+{
 
 inline int g_total = 0;
 inline int g_failed = 0;
 
-inline void check(bool cond, const char* expr, const char* file, int line) {
+inline void check(bool cond, const char *expr, const char *file, int line)
+{
     ++g_total;
-    if (!cond) {
+    if (!cond)
+    {
         ++g_failed;
         INK_ERROR << "CHECK FAILED: " << expr << " (" << file << ":" << line << ")";
     }
@@ -28,7 +31,8 @@ inline void check(bool cond, const char* expr, const char* file, int line) {
 #define CHECK(cond) ::test::check((cond), #cond, __FILE__, __LINE__)
 #define SECTION(name) INK_LOG << "\n========== " name " =========="
 
-void runtime(std::function<void()>&& f) {
+void runtime(std::function<void()> &&f)
+{
     auto start = std::chrono::high_resolution_clock::now();
     f();
     auto end = std::chrono::high_resolution_clock::now();
@@ -63,7 +67,8 @@ void test_utils()
 
     auto execResult = ink::utils::exec_command("echo ink_exec_test");
     CHECK(execResult.has_value());
-    if (execResult.has_value()) {
+    if (execResult.has_value())
+    {
         CHECK(execResult->find("ink_exec_test") != std::string::npos);
     }
 }
@@ -104,7 +109,8 @@ void test_inkogger()
 
     std::ifstream in(logPath);
     CHECK(in.is_open());
-    if (in.is_open()) {
+    if (in.is_open())
+    {
         std::stringstream ss;
         ss << in.rdbuf();
         CHECK(ss.str().find("file logging smoke test") != std::string::npos);
@@ -124,14 +130,20 @@ void test_inkogger()
     constexpr int kLinesPerThread = 250;
     {
         std::vector<std::thread> threads;
-        for (int t = 0; t < kThreads; ++t) {
-            threads.emplace_back([stressLogger, t]() {
-                for (int i = 0; i < kLinesPerThread; ++i) {
-                    INKL_INFO(stressLogger) << "thread=" << t << " line=" << i;
-                }
-            });
+        threads.reserve(kThreads);
+        for (int t = 0; t < kThreads; ++t)
+        {
+            threads.emplace_back(
+                [stressLogger, t]()
+                {
+                    for (int i = 0; i < kLinesPerThread; ++i)
+                    {
+                        INKL_INFO(stressLogger) << "thread=" << t << " line=" << i;
+                    }
+                });
         }
-        for (auto& th : threads) th.join();
+        for (auto &th : threads)
+            th.join();
     }
     stressLogger->setLogToFile("");
 
@@ -139,8 +151,10 @@ void test_inkogger()
     int lineCount = 0;
     bool corrupted = false;
     std::string line;
-    while (std::getline(concurrentIn, line)) {
-        if (line.find("line=") == std::string::npos) corrupted = true;
+    while (std::getline(concurrentIn, line))
+    {
+        if (line.find("line=") == std::string::npos)
+            corrupted = true;
         ++lineCount;
     }
     CHECK(!corrupted);
@@ -193,7 +207,7 @@ void test_ringbuffer()
     rb.clear();
     CHECK(rb.write("0123456789", 10) == 10);
     char drain[8] = {};
-    CHECK(rb.read(drain, 6) == 6); // readPos now at 6
+    CHECK(rb.read(drain, 6) == 6);     // readPos now at 6
     CHECK(rb.write("ABCDEF", 6) == 6); // writePos wraps around past capacity=16
 
     char full[16] = {};
@@ -211,14 +225,14 @@ void test_ringbuffer()
     rb.clear();
     rb.write("zerocpy", 7);
     size_t avail = 0;
-    const char* readPtr = rb.getReadBuffer(avail);
+    const char *readPtr = rb.getReadBuffer(avail);
     CHECK(readPtr != nullptr);
     CHECK(avail == 7);
     rb.advanceReadPos(7);
     CHECK(rb.empty());
 
     size_t space = 0;
-    char* writePtr = rb.getWriteBuffer(space);
+    char *writePtr = rb.getWriteBuffer(space);
     CHECK(writePtr != nullptr);
     CHECK(space > 0);
 
@@ -236,18 +250,21 @@ void test_ringbuffer()
 // ============================================================================
 // ObjectPool
 // ============================================================================
-struct PoolProbe {
+struct PoolProbe
+{
     static inline int liveCount = 0;
     static inline int constructCount = 0;
     static inline int destructCount = 0;
 
     int value;
 
-    explicit PoolProbe(int v) : value(v) {
+    explicit PoolProbe(int v) : value(v)
+    {
         ++liveCount;
         ++constructCount;
     }
-    ~PoolProbe() {
+    ~PoolProbe()
+    {
         --liveCount;
         ++destructCount;
     }
@@ -266,12 +283,12 @@ void test_objectpool()
 
         // acquire() must actually placement-construct T (previously it
         // handed back raw, uninitialized storage).
-        PoolProbe* a = pool.acquire(42);
+        PoolProbe *a = pool.acquire(42);
         CHECK(a->value == 42);
         CHECK(PoolProbe::liveCount == 1);
         CHECK(PoolProbe::constructCount == 1);
 
-        PoolProbe* b = pool.acquire(7);
+        PoolProbe *b = pool.acquire(7);
         CHECK(b->value == 7);
         CHECK(PoolProbe::liveCount == 2);
 
@@ -281,7 +298,7 @@ void test_objectpool()
         CHECK(PoolProbe::destructCount == 1);
 
         // Reacquire should reuse freed storage and construct a fresh object.
-        PoolProbe* c = pool.acquire(99);
+        PoolProbe *c = pool.acquire(99);
         CHECK(c->value == 99);
         CHECK(PoolProbe::liveCount == 2);
 
@@ -290,12 +307,15 @@ void test_objectpool()
         CHECK(PoolProbe::liveCount == 0);
 
         // Force expansion beyond the initial slab (iSize=4).
-        std::vector<PoolProbe*> many;
-        for (int i = 0; i < 20; ++i) {
+        std::vector<PoolProbe *> many;
+        many.reserve(20);
+        for (int i = 0; i < 20; ++i)
+        {
             many.push_back(pool.acquire(i));
         }
         CHECK(PoolProbe::liveCount == 20);
-        for (PoolProbe* p : many) {
+        for (PoolProbe *p : many)
+        {
             pool.release(p);
         }
         CHECK(PoolProbe::liveCount == 0);
@@ -316,11 +336,11 @@ void test_arena_allocator()
     ink::InkedArena::Arena a{};
     arena.arena_init(&a, 4096);
 
-    void* p1 = arena.arena_alloc(&a, 64, alignof(std::max_align_t));
+    void *p1 = arena.arena_alloc(&a, 64, alignof(std::max_align_t));
     CHECK(p1 != nullptr);
     CHECK((reinterpret_cast<std::uintptr_t>(p1) % alignof(std::max_align_t)) == 0);
 
-    void* p2 = arena.arena_alloc(&a, 128, 16);
+    void *p2 = arena.arena_alloc(&a, 128, 16);
     CHECK(p2 != nullptr);
     CHECK((reinterpret_cast<std::uintptr_t>(p2) % 16) == 0);
     CHECK(p2 != p1);
@@ -328,12 +348,12 @@ void test_arena_allocator()
     // Regression test: a large, exactly-block-sized allocation with a wide
     // alignment requirement used to spuriously fail because the freshly
     // created block had no slack reserved for alignment padding.
-    void* big = arena.arena_alloc(&a, 8192, 64);
+    void *big = arena.arena_alloc(&a, 8192, 64);
     CHECK(big != nullptr);
     CHECK((reinterpret_cast<std::uintptr_t>(big) % 64) == 0);
 
     arena.arena_reset(&a);
-    void* afterReset = arena.arena_alloc(&a, 64, 8);
+    void *afterReset = arena.arena_alloc(&a, 64, 8);
     CHECK(afterReset != nullptr);
 
     arena.arena_destroy(&a);
@@ -348,10 +368,13 @@ void test_aligned_allocator()
     SECTION("AlignedAllocator");
 
     ink::AlignedAllocator<f32, 64> alloc;
-    f32* mem = alloc.allocate(16);
+    f32 *mem = alloc.allocate(16);
     CHECK(mem != nullptr);
+    if (!mem)
+        return;
     CHECK((reinterpret_cast<std::uintptr_t>(mem) % 64) == 0);
-    for (int i = 0; i < 16; ++i) mem[i] = static_cast<f32>(i);
+    for (int i = 0; i < 16; ++i)
+        mem[i] = static_cast<f32>(i);
     CHECK(mem[15] == 15.0f);
     alloc.deallocate(mem, 16);
 
@@ -365,16 +388,22 @@ void test_aligned_allocator()
 // ============================================================================
 // ThreadPool
 // ============================================================================
-int add(int a, int b) { return a + b; }
+int add(int a, int b)
+{
+    return a + b;
+}
 
 void test_threadpool()
 {
     SECTION("ThreadPool");
 
     bool threwOnZeroWorkers = false;
-    try {
+    try
+    {
         ink::ThreadPool zeroPool(0);
-    } catch (const std::invalid_argument&) {
+    }
+    catch (const std::invalid_argument &)
+    {
         threwOnZeroWorkers = true;
     }
     CHECK(threwOnZeroWorkers); // regression: 0 workers used to hang forever
@@ -383,18 +412,22 @@ void test_threadpool()
     ink::ThreadPool pool(kWorkers);
     std::vector<std::future<int>> futures;
 
-    runtime([&]() {
-        for (int i = 0; i < 50; ++i) {
-            futures.push_back(pool.submit(add, i, i * 2));
-        }
+    runtime(
+        [&]()
+        {
+            for (int i = 0; i < 50; ++i)
+            {
+                futures.push_back(pool.submit(add, i, i * 2));
+            }
 
-        int expectedSum = 0, actualSum = 0;
-        for (int i = 0; i < 50; ++i) {
-            expectedSum += i + i * 2;
-            actualSum += futures[i].get();
-        }
-        CHECK(expectedSum == actualSum);
-    });
+            int expectedSum = 0, actualSum = 0;
+            for (int i = 0; i < 50; ++i)
+            {
+                expectedSum += i + i * 2;
+                actualSum += futures[i].get();
+            }
+            CHECK(expectedSum == actualSum);
+        });
 }
 
 // ============================================================================
@@ -402,24 +435,34 @@ void test_threadpool()
 // ============================================================================
 class TestWorkerThread : public ink::WorkerThread
 {
-public:
-    TestWorkerThread(ink::WorkerThread::Policy policy, size_t timeoutSecs) :
-        WorkerThread(policy, timeoutSecs),
-        _processCount(0)
+  public:
+    TestWorkerThread(ink::WorkerThread::Policy policy, size_t timeoutSecs)
+        : WorkerThread(policy, timeoutSecs), _processCount(0)
     {
-        setOnStartAction([this]() { INK_LOG << "TestWorkerThread started"; });
-        setOnDestructionAction([this]() { INK_LOG << "TestWorkerThread destroyed"; });
+        setOnStartAction(
+            [this]()
+            {
+                INK_LOG << "TestWorkerThread started";
+            });
+        setOnDestructionAction(
+            [this]()
+            {
+                INK_LOG << "TestWorkerThread destroyed";
+            });
     }
 
-    size_t getProcessCount() const { return _processCount.load(); }
+    size_t getProcessCount() const
+    {
+        return _processCount.load();
+    }
 
-protected:
+  protected:
     void process() override
     {
         _processCount++;
     }
 
-private:
+  private:
     std::atomic<size_t> _processCount;
 };
 
@@ -477,7 +520,7 @@ void test_queue()
 
     auto popped = q.pop_front();
     CHECK(popped.has_value());
-    CHECK(popped.value() == 3);
+    CHECK(popped.value_or(0) == 3);
     CHECK(q.empty());
 
     CHECK(!q.try_pop(value));
@@ -487,18 +530,21 @@ void test_queue()
     CHECK(q.size() == 4);
 
     int sum = 0;
-    while (q.try_pop(value)) sum += value;
+    while (q.try_pop(value))
+        sum += value;
     CHECK(sum == 100);
 
     bool poppedAfterTimeout = q.try_pop_for(value, std::chrono::milliseconds(10));
     CHECK(!poppedAfterTimeout); // empty queue, should time out
 
     // wait_and_pop must unblock (returning false) once shutdown() is called.
-    std::thread waiter([&]() {
-        int v = 0;
-        bool got = q.wait_and_pop(v);
-        CHECK(!got);
-    });
+    std::thread waiter(
+        [&]()
+        {
+            int v = 0;
+            bool got = q.wait_and_pop(v);
+            CHECK(!got);
+        });
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     q.shutdown();
     waiter.join();
@@ -516,7 +562,8 @@ void test_timerwheel()
     ink::TimerWheel wheel(kTicksToLive, 10); // 4 ticks to live, 10ms per tick
 
     std::array<ink::TimerNode, 3> nodes{};
-    for (auto& n : nodes) wheel.update(&n);
+    for (auto &n : nodes)
+        wheel.update(&n);
 
     // unlink() removes a node before it expires.
     wheel.unlink(&nodes[1]);
@@ -528,11 +575,15 @@ void test_timerwheel()
     // `ticksToLive` (newSlot = current + ticksToLive). tick() returns the
     // bucket at the hand's *current* position before advancing it, so
     // reaching that bucket takes ticksToLive + 1 calls.
-    for (u32 i = 0; i < kTicksToLive + 1; ++i) {
-        wheel.processExpired([&](ink::TimerNode* node) {
-            ++expiredCount;
-            if (node == &nodes[1]) sawUnlinkedNode = true;
-        });
+    for (u32 i = 0; i < kTicksToLive + 1; ++i)
+    {
+        wheel.processExpired(
+            [&](ink::TimerNode *node)
+            {
+                ++expiredCount;
+                if (node == &nodes[1])
+                    sawUnlinkedNode = true;
+            });
     }
 
     CHECK(expiredCount == 2); // nodes[0] and nodes[2], not the unlinked one
@@ -545,17 +596,30 @@ void test_timerwheel()
 // ============================================================================
 // InkedList
 // ============================================================================
-struct MoveProbe {
+struct MoveProbe
+{
     int value;
     static inline int copyCount = 0;
     static inline int moveCount = 0;
 
-    MoveProbe(int v) : value(v) {}
-    MoveProbe(const MoveProbe& other) : value(other.value) { ++copyCount; }
-    MoveProbe(MoveProbe&& other) noexcept : value(other.value) { ++moveCount; other.value = -1; }
-    MoveProbe& operator=(const MoveProbe&) = default;
-    MoveProbe& operator=(MoveProbe&&) = default;
-    bool operator==(const MoveProbe& other) const { return value == other.value; }
+    MoveProbe(int v) : value(v)
+    {
+    }
+    MoveProbe(const MoveProbe &other) : value(other.value)
+    {
+        ++copyCount;
+    }
+    MoveProbe(MoveProbe &&other) noexcept : value(other.value)
+    {
+        ++moveCount;
+        other.value = -1;
+    }
+    MoveProbe &operator=(const MoveProbe &) = default;
+    MoveProbe &operator=(MoveProbe &&) = default;
+    bool operator==(const MoveProbe &other) const
+    {
+        return value == other.value;
+    }
 };
 
 void test_inkedlist()
@@ -577,9 +641,13 @@ void test_inkedlist()
     CHECK(list.length() == 4);
 
     {
-        auto* curr = list.head();
+        auto *curr = list.head();
         std::vector<int> observed;
-        while (curr) { observed.push_back(curr->data); curr = curr->next; }
+        while (curr)
+        {
+            observed.push_back(curr->data);
+            curr = curr->next;
+        }
         CHECK((observed == std::vector<int>{10, 15, 20, 30}));
     }
 
@@ -602,7 +670,8 @@ void test_inkedlist()
     CHECK(list.pop_back(&popped));
     CHECK(list.length() == 1);
 
-    while (list.length() > 0) list.pop_front(nullptr);
+    while (list.length() > 0)
+        list.pop_front(nullptr);
     CHECK(list.length() == 0);
     CHECK(!list.pop_front(nullptr));
     CHECK(!list.pop_back(nullptr));
@@ -715,9 +784,12 @@ void test_inkotp()
     // Regression test: mismatched key/text length must not silently read
     // out of bounds -- it must fail loudly instead.
     bool threwOnShortKey = false;
-    try {
+    try
+    {
         ink::crypt::OTP::encrypt(plaintext, "short");
-    } catch (const std::invalid_argument&) {
+    }
+    catch (const std::invalid_argument &)
+    {
         threwOnShortKey = true;
     }
     CHECK(threwOnShortKey);
@@ -773,6 +845,8 @@ void test_inktype()
     ink::InkType strMoveDst(std::move(strMoveSrc));
     CHECK(strMoveDst.getType() == ink::InkType::InkTypeId::String);
     CHECK(std::get<std::string>(strMoveDst.toVariant()) == "move me");
+    // The move contract explicitly guarantees an Invalid source.
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     CHECK(!strMoveSrc.isValid());
 }
 
@@ -788,9 +862,15 @@ void test_lastwish()
 
     {
         ink::LastWish wish(
-            [&]() { started = true; CHECK(!finished); },
-            [&]() { finished = true; }
-        );
+            [&]()
+            {
+                started = true;
+                CHECK(!finished);
+            },
+            [&]()
+            {
+                finished = true;
+            });
         CHECK(started);
         CHECK(!finished);
     }
@@ -819,9 +899,12 @@ void test_argparser()
 
     // Missing required argument must throw.
     bool threwOnMissingRequired = false;
-    try {
+    try
+    {
         parser.parse_args("--name=bob");
-    } catch (const std::runtime_error&) {
+    }
+    catch (const std::runtime_error &)
+    {
         threwOnMissingRequired = true;
     }
     CHECK(threwOnMissingRequired);
@@ -900,7 +983,8 @@ void test_enhancedjson()
 // ============================================================================
 // main
 // ============================================================================
-int main(int argc, char** argv)
+int main(int argc, char **argv)
+try
 {
     ink::LogManager::getInstance().setGlobalLevel(ink::LogLevel::TRACE);
 
@@ -937,4 +1021,14 @@ int main(int argc, char** argv)
     INK_LOG << "==================================================";
 
     return test::g_failed == 0 ? 0 : 1;
+}
+catch (const std::exception &error)
+{
+    std::fprintf(stderr, "Unhandled test exception: %s\n", error.what());
+    return 1;
+}
+catch (...)
+{
+    std::fputs("Unhandled test exception\n", stderr);
+    return 1;
 }
