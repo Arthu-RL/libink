@@ -5,12 +5,6 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0]
-
-### Added
-
-- C++ linting with `clang-tidy-21` and formatting with `clang-format-21`, matching Aura3D's rules, with local commands and CI checks for changed code
-
 ## [0.5.0]
 
 ### Added
@@ -22,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   futures. Joins workers before propagating exceptions, serializes concurrent
   parallel dispatches, and runs recursive dispatch inline.
 - Focused storage/dispatch tests; both APIs are included by `ink/ink.hpp`.
+- C++ linting with `clang-tidy-21` and formatting with `clang-format-21`, matching Aura3D's rules, with local commands and CI checks for changed code
 
 ### Fixed
 
