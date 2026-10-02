@@ -19,6 +19,7 @@
 #include <ink/InkixTree.h>
 #include <ink/Inkogger.h>
 #include <ink/LastWish.h>
+#include <ink/MoveOnlyFunction.h>
 #include <ink/ObjectPool.h>
 #include <ink/ParallelProcessor.h>
 #include <ink/Queue.h>

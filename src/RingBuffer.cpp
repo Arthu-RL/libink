@@ -1,5 +1,7 @@
 #include "../include/ink/RingBuffer.h"
 
+#include <cstring>
+
 namespace ink
 {
 
@@ -19,11 +21,11 @@ size_t RingBuffer::read(char *dest, size_t maxLen)
     const size_t first = std::min(toRead, tail);
 
     // First chunk
-    memcpy(dest, _buffer.data() + _readPos, first);
+    std::memcpy(dest, _buffer.data() + _readPos, first);
 
     // Wrap-around chunk
     if (toRead > first)
-        memcpy(dest + first, _buffer.data(), toRead - first);
+        std::memcpy(dest + first, _buffer.data(), toRead - first);
 
     _readPos += toRead;
     if (_readPos >= _capacity)
@@ -43,11 +45,11 @@ size_t RingBuffer::write(const char *data, size_t len)
     const size_t tail = _capacity - _writePos;
     const size_t first = std::min(toWrite, tail);
 
-    memcpy(_buffer.data() + _writePos, data, first);
+    std::memcpy(_buffer.data() + _writePos, data, first);
 
     // Wrap-around chunk
     if (toWrite > first)
-        memcpy(_buffer.data(), data + first, toWrite - first);
+        std::memcpy(_buffer.data(), data + first, toWrite - first);
 
     _writePos += toWrite;
     if (_writePos >= _capacity)
