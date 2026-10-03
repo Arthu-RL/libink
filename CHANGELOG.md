@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0]
+
+### Added
+
+- `INK_ENUM_FLAGS(E)`: bitwise operators for an enum class; `INK_FLAG_*` then work on it.
+- `INK_DEFER { ... };`: allocation-free scope exit, last declared runs first.
+- `INK_CONCAT(a, b)`.
+
+### Changed
+
+- `ink_base.hpp` includes nothing. Code that got `<cstdint>`, `<cstddef>`,
+  `<cstring>`, `<cstdlib>`, `<climits>` or `<functional>` through it must
+  include them itself.
+- `ink::move_only_function` moved to `<ink/MoveOnlyFunction.h>` (still in `ink.hpp`).
+- `INK_ARRAY_SIZE` fails to compile on a pointer instead of returning a wrong count. It
+  accepts built-in arrays only: use `.size()` on `std::array`.
+- `INK_KIB/MIB/GIB_TO_BYTES` return `u64`; `INK_GIB_TO_BYTES(4)` overflowed `int`.
+
+### Removed
+
+- Unused `ink_base.hpp` macros: `INK_MALLOC`/`FREE`/`REALLOC`/`CALLOC`,
+  `INK_STRLEN`/`STRCMP`/`STRNCMP`/`STRCPY`/`STRNCPY`, `INK_INLINE`, `INK_NULL`,
+  `INK_TRUE`/`FALSE`, `INK_DEPRECATED`, `INK_FORCEINLINE`, `INK_NOINLINE`,
+  `INK_NORETURN`, `INK_PACKED`, `INK_PRINTF_LIKE`, `INK_LIKELY`/`UNLIKELY`,
+  `INK_ALIGN`, `INK_COMPILER_*`, `CONCAT`, `CONCAT_EXPAND`, `LOCATION`,
+  `STATIC_ASSERT`, `b32`, `INK_ZERO_MEMORY` (use `std::memset` / `.fill()`).
+
+### Fixed
+
+- `INK_ALIGN_SIZE` with a `u64` size and a `u32` alignment cleared the high 32 bits.
+- `VERSION` and `project(VERSION)` now match `ink.hpp` (0.6.0).
+
 ## [0.5.0]
 
 ### Added

@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 
+#include "ink/MoveOnlyFunction.h"
 #include "ink/ink_base.hpp"
 
 namespace ink

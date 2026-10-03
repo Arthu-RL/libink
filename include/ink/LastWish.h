@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include "ink/MoveOnlyFunction.h"
 #include "ink/ink_base.hpp"
 
 namespace ink
