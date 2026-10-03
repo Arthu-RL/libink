@@ -19,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<cstring>`, `<cstdlib>`, `<climits>` or `<functional>` through it must
   include them itself.
 - `ink::move_only_function` moved to `<ink/MoveOnlyFunction.h>` (still in `ink.hpp`).
-- `INK_ARRAY_SIZE` fails to compile on a pointer instead of returning a wrong count.
+- `INK_ARRAY_SIZE` fails to compile on a pointer instead of returning a wrong count. It
+  accepts built-in arrays only: use `.size()` on `std::array`.
 - `INK_KIB/MIB/GIB_TO_BYTES` return `u64`; `INK_GIB_TO_BYTES(4)` overflowed `int`.
-- `INK_ZERO_MEMORY` uses `__builtin_memset` on GCC/Clang, so it needs no `<cstring>`.
 
 ### Removed
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `INK_TRUE`/`FALSE`, `INK_DEPRECATED`, `INK_FORCEINLINE`, `INK_NOINLINE`,
   `INK_NORETURN`, `INK_PACKED`, `INK_PRINTF_LIKE`, `INK_LIKELY`/`UNLIKELY`,
   `INK_ALIGN`, `INK_COMPILER_*`, `CONCAT`, `CONCAT_EXPAND`, `LOCATION`,
-  `STATIC_ASSERT`, `b32`.
+  `STATIC_ASSERT`, `b32`, `INK_ZERO_MEMORY` (use `std::memset` / `.fill()`).
 
 ### Fixed
 

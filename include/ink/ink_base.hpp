@@ -175,13 +175,6 @@ template <typename F> Deferred<F> operator+(DeferTag, F &&fn) noexcept
 #define INK_MIB_TO_BYTES(n) (static_cast<u64>(n) << 20)
 #define INK_GIB_TO_BYTES(n) (static_cast<u64>(n) << 30)
 
-#if defined(__GNUC__) || defined(__clang__)
-#define INK_ZERO_MEMORY(ptr, size) __builtin_memset((ptr), 0, (size))
-#else
-
-#define INK_ZERO_MEMORY(ptr, size) std::memset((ptr), 0, (size))
-#endif
-
 #define INK_ALIGN_SIZE(size, alignment)                                                                                \
     (((size) + ((alignment) - 1)) & ~(static_cast<decltype((size) + (alignment))>(alignment) - 1))
 

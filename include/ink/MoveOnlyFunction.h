@@ -1,5 +1,5 @@
-#ifndef MOVEONLYFUNCTION_H
-#define MOVEONLYFUNCTION_H
+#ifndef INK_MOVE_ONLY_FUNCTION_H
+#define INK_MOVE_ONLY_FUNCTION_H
 
 #include <functional>
 

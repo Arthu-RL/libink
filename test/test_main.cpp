@@ -85,11 +85,6 @@ void test_base()
     INK_FLAG_TOGGLE(flags, BaseFlags::B);
     CHECK(flags == BaseFlags::Nothing);
 
-    std::array<u8, 8> bytes{};
-    bytes.fill(0xff);
-    INK_ZERO_MEMORY(bytes.data(), bytes.size());
-    CHECK((bytes == std::array<u8, 8>{}));
-
     int order = 0;
     {
         INK_DEFER
