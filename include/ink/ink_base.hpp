@@ -68,16 +68,29 @@ using f64 = double;
 
 using ink_h = void *;
 
-enum ink_result_t : i32
+namespace ink
 {
-    SUCCESS = 0,
-    ERROR_GENERIC = -1,
-    ERROR_INVALID_PARAM = -2,
-    ERROR_OUT_OF_MEMORY = -3,
-    ERROR_NOT_IMPLEMENTED = -4,
-    ERROR_NOT_SUPPORTED = -5,
-    ERROR_IO = -6
+
+/** No ERROR_* spellings: <winerror.h> defines them as macros, scoped or not. */
+enum class Result : i32
+{
+    Ok = 0,
+    Generic = -1,
+    InvalidParam = -2,
+    OutOfMemory = -3,
+    NotImplemented = -4,
+    NotSupported = -5,
+    Io = -6
 };
+
+/** Rounds @p size up to a power-of-two @p alignment, in the wider of the two types. */
+template <typename T, typename A> [[nodiscard]] constexpr auto align_up(T size, A alignment) noexcept
+{
+    using C = decltype(size + alignment);
+    return (static_cast<C>(size) + static_cast<C>(alignment) - 1) & ~(static_cast<C>(alignment) - 1);
+}
+
+} // namespace ink
 
 namespace ink::detail
 {
@@ -115,11 +128,6 @@ template <typename F> Deferred<F> operator+(DeferTag, F &&fn) noexcept
 /*====================
  * UTILITY MACROS
  *====================*/
-/* Min/Max */
-#define INK_MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define INK_MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define INK_CLAMP(x, min, max) (INK_MIN(INK_MAX((x), (min)), (max)))
-
 /* Array operations */
 /** Fails to compile on a pointer, where a sizeof division would silently return a wrong count. */
 #define INK_ARRAY_SIZE(arr) sizeof(::ink::detail::array_size_helper(arr))
@@ -133,7 +141,8 @@ template <typename F> Deferred<F> operator+(DeferTag, F &&fn) noexcept
 
 /* E is a type and INK_DEFER a declaration: neither can be parenthesized. */
 // NOLINTBEGIN(bugprone-macro-parentheses)
-/** Bitwise operators for an enum class, so INK_FLAG_* work on it. Expand next to the enum: ADL finds them there. */
+/** Bitwise operators for an enum class, so INK_FLAG_* work on it. Expand at namespace scope next to the enum,
+ *  qualified for a nested one (inside a class they would become members): ADL finds them there. */
 #define INK_ENUM_FLAGS(E)                                                                                              \
     [[nodiscard]] constexpr E operator|(E a, E b) noexcept                                                             \
     {                                                                                                                  \
@@ -174,8 +183,5 @@ template <typename F> Deferred<F> operator+(DeferTag, F &&fn) noexcept
 #define INK_KIB_TO_BYTES(n) (static_cast<u64>(n) << 10)
 #define INK_MIB_TO_BYTES(n) (static_cast<u64>(n) << 20)
 #define INK_GIB_TO_BYTES(n) (static_cast<u64>(n) << 30)
-
-#define INK_ALIGN_SIZE(size, alignment)                                                                                \
-    (((size) + ((alignment) - 1)) & ~(static_cast<decltype((size) + (alignment))>(alignment) - 1))
 
 #endif // ink_base_HPP

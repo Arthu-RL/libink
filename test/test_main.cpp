@@ -67,8 +67,9 @@ template <typename T> constexpr bool kHasArraySize = requires(T &arr) { INK_ARRA
 
 static_assert(kHasArraySize<int[4]> && !kHasArraySize<int *>);
 static_assert(INK_GIB_TO_BYTES(4) == 4ull * 1024 * 1024 * 1024);
-static_assert(INK_ALIGN_SIZE(u64{0x1'0000'0001}, u32{16}) == 0x1'0000'0010);
-static_assert(INK_ALIGN_SIZE(usize{32}, 16) == 32);
+static_assert(ink::align_up(u64{0x1'0000'0001}, u32{16}) == 0x1'0000'0010);
+static_assert(ink::align_up(usize{32}, 16) == 32);
+static_assert(std::is_same_v<decltype(ink::align_up(u32{1}, u64{8})), u64>);
 
 void test_base()
 {
@@ -120,7 +121,7 @@ void test_utils()
     CHECK(parsed.value_or(0) == 12345);
 
     auto badParsed = ink::utils::string_int("not_a_number");
-    CHECK(!badParsed.has_value());
+    CHECK(!badParsed.has_value() && badParsed.error() == ink::Result::InvalidParam);
 
     u64 t1 = ink::utils::nowMillis();
     std::this_thread::sleep_for(std::chrono::milliseconds(5));

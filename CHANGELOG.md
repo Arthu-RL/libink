@@ -12,9 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `INK_ENUM_FLAGS(E)`: bitwise operators for an enum class; `INK_FLAG_*` then work on it.
 - `INK_DEFER { ... };`: allocation-free scope exit, last declared runs first.
 - `INK_CONCAT(a, b)`.
+- `ink::align_up(size, alignment)`: `constexpr`, each argument evaluated once, in the
+  wider of the two types.
 
 ### Changed
 
+- **Breaking:** `ink_result_t` is now `enum class ink::Result` (`Ok`, `Generic`,
+  `InvalidParam`, `OutOfMemory`, `NotImplemented`, `NotSupported`, `Io`).
+  `ERROR_NOT_SUPPORTED` is a `<winerror.h>` macro, so the old spellings broke any
+  Windows TU that included `<windows.h>` first.
 - `ink_base.hpp` includes nothing. Code that got `<cstdint>`, `<cstddef>`,
   `<cstring>`, `<cstdlib>`, `<climits>` or `<functional>` through it must
   include them itself.
@@ -31,10 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `INK_NORETURN`, `INK_PACKED`, `INK_PRINTF_LIKE`, `INK_LIKELY`/`UNLIKELY`,
   `INK_ALIGN`, `INK_COMPILER_*`, `CONCAT`, `CONCAT_EXPAND`, `LOCATION`,
   `STATIC_ASSERT`, `b32`, `INK_ZERO_MEMORY` (use `std::memset` / `.fill()`).
+- `INK_MIN`/`INK_MAX`/`INK_CLAMP`, which evaluated arguments more than once: use
+  `std::min`/`std::max`/`std::clamp`. `INK_ALIGN_SIZE`: use `ink::align_up`.
 
 ### Fixed
 
-- `INK_ALIGN_SIZE` with a `u64` size and a `u32` alignment cleared the high 32 bits.
+- Aligning a `u64` size to a `u32` alignment cleared the high 32 bits (`INK_ALIGN_SIZE`).
 - `VERSION` and `project(VERSION)` now match `ink.hpp` (0.6.0).
 
 ## [0.5.0]
