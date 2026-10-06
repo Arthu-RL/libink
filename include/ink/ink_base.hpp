@@ -1,52 +1,20 @@
 #ifndef ink_base_HPP
 #define ink_base_HPP
 
-/**
- * @file ink_base.hpp
- * @brief Base definitions for INK library
- *
- * This file contains common macros and basic definitions needed by all INK components.
- */
-
-/*====================
- * Good Macros
- *====================*/
-// Double stringification
-#define INK_STR_HELPER(x) #x
-#define INK_STR(x) INK_STR_HELPER(x)
-
-// Token pasting (concatenation)
-#define CONCAT(a, b) a##b
-#define CONCAT_EXPAND(a, b) CONCAT(a, b)
-
-#define LOCATION __FILE__ ":" INK_STR(__LINE__)
-
-// Compile-time assertions (prefer static_assert directly in new code)
-#define STATIC_ASSERT(cond, msg) static_assert(cond, #msg)
-
-/*====================
- * C++ VERSION CHECK
- *====================*/
 #ifndef __cplusplus
 #error "INK requires a C++ compiler"
 #elif __cplusplus < 202100L
 #error "INK requires C++23 or later (compile with -std=c++23)"
 #endif
 
-/*====================
- * COMPILER DETECTION
- *====================*/
-#if defined(__clang__)
-#define INK_COMPILER_CLANG 1
-#elif defined(__GNUC__) || defined(__GNUG__)
-#define INK_COMPILER_GCC 1
-#elif defined(_MSC_VER)
-#define INK_COMPILER_MSVC 1
-#endif
+#define INK_STR_HELPER(x) #x
+#define INK_STR(x) INK_STR_HELPER(x)
 
-/*====================
- * PLATFORM DETECTION
- *====================*/
+#define INK_CONCAT_HELPER(a, b) a##b
+#define INK_CONCAT(a, b) INK_CONCAT_HELPER(a, b)
+
+#define INK_UNUSED(x) (void)(x)
+
 #if defined(_WIN32) || defined(_WIN64)
 #define INK_PLATFORM_WINDOWS 1
 #elif defined(__APPLE__) && defined(__MACH__)
@@ -59,130 +27,110 @@
 #define INK_PLATFORM_UNIX 1
 #endif
 
-/*====================
- * BASIC DEFINITIONS
- *====================*/
-#define INK_UNUSED(x) (void)(x)
-#define INK_INLINE inline
-#define INK_NULL nullptr
-
-/* Boolean values */
-#define INK_TRUE 1
-#define INK_FALSE 0
-
-/*====================
- * COMPILER SPECIFIC
- *====================*/
-#if defined(INK_COMPILER_GCC) || defined(INK_COMPILER_CLANG)
-#define INK_DEPRECATED [[deprecated]]
-#define INK_FORCEINLINE __attribute__((always_inline)) INK_INLINE
-#define INK_NOINLINE __attribute__((noinline))
-#define INK_NORETURN [[noreturn]]
-#define INK_PACKED __attribute__((packed))
-#define INK_PRINTF_LIKE(fmt_pos, args_pos) __attribute__((format(printf, fmt_pos, args_pos)))
-#define INK_LIKELY(x) __builtin_expect(!!(x), 1)
-#define INK_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#define INK_ALIGN(x) __attribute__((aligned(x)))
-#elif defined(INK_COMPILER_MSVC)
-#define INK_DEPRECATED [[deprecated]]
-#define INK_FORCEINLINE __forceinline
-#define INK_NOINLINE __declspec(noinline)
-#define INK_NORETURN [[noreturn]]
-#define INK_PACKED
-#define INK_PRINTF_LIKE(fmt_pos, args_pos)
-#define INK_LIKELY(x) (x)
-#define INK_UNLIKELY(x) (x)
-#define INK_ALIGN(x) __declspec(align(x))
-#else
-#define INK_DEPRECATED [[deprecated]]
-#define INK_FORCEINLINE INK_INLINE
-#define INK_NOINLINE
-#define INK_NORETURN [[noreturn]]
-#define INK_PACKED
-#define INK_PRINTF_LIKE(fmt_pos, args_pos)
-#define INK_LIKELY(x) (x)
-#define INK_UNLIKELY(x) (x)
-#define INK_ALIGN(x)
-#endif
-
-/* Export/Import symbols */
 #if defined(INK_SHARED) && defined(INK_PLATFORM_WINDOWS)
 #ifdef INK_EXPORT
 #define INK_API __declspec(dllexport)
 #else
 #define INK_API __declspec(dllimport)
 #endif
-#elif defined(INK_SHARED)
-#ifdef INK_EXPORT
+#elif defined(INK_SHARED) && defined(INK_EXPORT)
 #define INK_API __attribute__((visibility("default")))
 #else
 #define INK_API
 #endif
+
+/** GCC/Clang predefine the exact types <cstdint> uses; MSVC's <cstdint> uses these. */
+#if defined(__INT8_TYPE__)
+using i8 = __INT8_TYPE__;
+using i16 = __INT16_TYPE__;
+using i32 = __INT32_TYPE__;
+using i64 = __INT64_TYPE__;
+using u8 = __UINT8_TYPE__;
+using u16 = __UINT16_TYPE__;
+using u32 = __UINT32_TYPE__;
+using u64 = __UINT64_TYPE__;
 #else
-#define INK_API
+using i8 = signed char;
+using i16 = short;
+using i32 = int;
+using i64 = long long;
+using u8 = unsigned char;
+using u16 = unsigned short;
+using u32 = unsigned int;
+using u64 = unsigned long long;
 #endif
 
-/*====================
- * TYPE DEFINITIONS
- *====================*/
-#include <climits>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-
-using i8 = std::int8_t;
-using i16 = std::int16_t;
-using i32 = std::int32_t;
-using i64 = std::int64_t;
-
-using u8 = std::uint8_t;
-using u16 = std::uint16_t;
-using u32 = std::uint32_t;
-using u64 = std::uint64_t;
-
-// 32-bit boolean storage: zero is false, nonzero is true. Prefer bool for ordinary logic.
-using b32 = u32;
-
-using usize = std::size_t;
-using isize = std::ptrdiff_t;
+using usize = decltype(sizeof(0));
+using isize = decltype(static_cast<char *>(nullptr) - static_cast<char *>(nullptr));
 
 using f32 = float;
 using f64 = double;
 
 using ink_h = void *;
 
-enum ink_result_t : i32
-{
-    SUCCESS = 0,
-    ERROR_GENERIC = -1,
-    ERROR_INVALID_PARAM = -2,
-    ERROR_OUT_OF_MEMORY = -3,
-    ERROR_NOT_IMPLEMENTED = -4,
-    ERROR_NOT_SUPPORTED = -5,
-    ERROR_IO = -6
-};
-
-#include <functional>
-
 namespace ink
 {
-#if defined(__cpp_lib_move_only_function)
-template <typename Sig> using move_only_function = std::move_only_function<Sig>;
-#else
-template <typename Sig> using move_only_function = std::function<Sig>;
-#endif
+
+/** No ERROR_* spellings: <winerror.h> defines them as macros, scoped or not. */
+enum class Result : i32
+{
+    Ok = 0,
+    Generic = -1,
+    InvalidParam = -2,
+    OutOfMemory = -3,
+    NotImplemented = -4,
+    NotSupported = -5,
+    Io = -6
+};
+
+/** Rounds @p size up to a power-of-two @p alignment, in the wider of the two types. */
+template <typename T, typename A> [[nodiscard]] constexpr auto align_up(T size, A alignment) noexcept
+{
+    using C = decltype(size + alignment);
+    return (static_cast<C>(size) + static_cast<C>(alignment) - 1) & ~(static_cast<C>(alignment) - 1);
+}
+
 } // namespace ink
+
+namespace ink::detail
+{
+
+template <typename T, usize N> auto array_size_helper(T (&)[N]) -> char (&)[N];
+
+template <typename F> class Deferred
+{
+  public:
+    explicit Deferred(F &&fn) noexcept : _fn(static_cast<F &&>(fn))
+    {
+    }
+    Deferred(const Deferred &) = delete;
+    Deferred &operator=(const Deferred &) = delete;
+    ~Deferred() noexcept
+    {
+        _fn();
+    }
+
+  private:
+    F _fn;
+};
+
+struct DeferTag
+{
+};
+
+template <typename F> Deferred<F> operator+(DeferTag, F &&fn) noexcept
+{
+    return Deferred<F>(static_cast<F &&>(fn));
+}
+
+} // namespace ink::detail
 
 /*====================
  * UTILITY MACROS
  *====================*/
-/* Min/Max */
-#define INK_MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define INK_MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define INK_CLAMP(x, min, max) (INK_MIN(INK_MAX((x), (min)), (max)))
-
 /* Array operations */
-#define INK_ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+/** Fails to compile on a pointer, where a sizeof division would silently return a wrong count. */
+#define INK_ARRAY_SIZE(arr) sizeof(::ink::detail::array_size_helper(arr))
 #define INK_ARRAY_EMPTY(arr) ((INK_ARRAY_SIZE(arr)) == 0)
 
 /* Flag operations */
@@ -191,35 +139,49 @@ template <typename Sig> using move_only_function = std::function<Sig>;
 #define INK_FLAG_TOGGLE(flags, flag) ((flags) ^= (flag))
 #define INK_FLAG_CHECK(flags, flag) (((flags) & (flag)) == (flag))
 
+/* E is a type and INK_DEFER a declaration: neither can be parenthesized. */
+// NOLINTBEGIN(bugprone-macro-parentheses)
+/** Bitwise operators for an enum class, so INK_FLAG_* work on it. Expand at namespace scope next to the enum,
+ *  qualified for a nested one (inside a class they would become members): ADL finds them there. */
+#define INK_ENUM_FLAGS(E)                                                                                              \
+    [[nodiscard]] constexpr E operator|(E a, E b) noexcept                                                             \
+    {                                                                                                                  \
+        return static_cast<E>(static_cast<__underlying_type(E)>(a) | static_cast<__underlying_type(E)>(b));            \
+    }                                                                                                                  \
+    [[nodiscard]] constexpr E operator&(E a, E b) noexcept                                                             \
+    {                                                                                                                  \
+        return static_cast<E>(static_cast<__underlying_type(E)>(a) & static_cast<__underlying_type(E)>(b));            \
+    }                                                                                                                  \
+    [[nodiscard]] constexpr E operator^(E a, E b) noexcept                                                             \
+    {                                                                                                                  \
+        return static_cast<E>(static_cast<__underlying_type(E)>(a) ^ static_cast<__underlying_type(E)>(b));            \
+    }                                                                                                                  \
+    [[nodiscard]] constexpr E operator~(E a) noexcept                                                                  \
+    {                                                                                                                  \
+        return static_cast<E>(~static_cast<__underlying_type(E)>(a));                                                  \
+    }                                                                                                                  \
+    constexpr E &operator|=(E &a, E b) noexcept                                                                        \
+    {                                                                                                                  \
+        return a = a | b;                                                                                              \
+    }                                                                                                                  \
+    constexpr E &operator&=(E &a, E b) noexcept                                                                        \
+    {                                                                                                                  \
+        return a = a & b;                                                                                              \
+    }                                                                                                                  \
+    constexpr E &operator^=(E &a, E b) noexcept                                                                        \
+    {                                                                                                                  \
+        return a = a ^ b;                                                                                              \
+    }
+
+/* Scope exit */
+#define INK_DEFER auto INK_CONCAT(ink_defer_, __COUNTER__) = ::ink::detail::DeferTag{} + [&]() noexcept -> void
+// NOLINTEND(bugprone-macro-parentheses)
+
 /*====================
  * MEMORY OPERATIONS
  *====================*/
-#define INK_KIB_TO_BYTES(n) ((n) << 10)
-#define INK_MIB_TO_BYTES(n) ((n) << 20)
-#define INK_GIB_TO_BYTES(n) ((n) << 30)
-#define INK_ZERO_MEMORY(ptr, size) std::memset((ptr), 0, (size))
-#define INK_ALIGN_SIZE(size, alignment) (((size) + ((alignment) - 1)) & ~((alignment) - 1))
+#define INK_KIB_TO_BYTES(n) (static_cast<u64>(n) << 10)
+#define INK_MIB_TO_BYTES(n) (static_cast<u64>(n) << 20)
+#define INK_GIB_TO_BYTES(n) (static_cast<u64>(n) << 30)
 
-/*====================
- * LIBRARY CONFIG
- *====================*/
-/* Memory allocation/deallocation functions */
-#ifndef INK_MALLOC
-#include <cstdlib>
-#define INK_MALLOC(size) std::malloc(size)
-#define INK_FREE(ptr) std::free(ptr)
-#define INK_REALLOC(ptr, size) std::realloc(ptr, size)
-#define INK_CALLOC(count, size) std::calloc(count, size)
-#endif
-
-/* String functions */
-#ifndef INK_STRLEN
-#include <cstring>
-#define INK_STRLEN(str) std::strlen(str)
-#define INK_STRCMP(a, b) std::strcmp(a, b)
-#define INK_STRNCMP(a, b, n) std::strncmp(a, b, n)
-#define INK_STRCPY(dst, src) std::strcpy(dst, src)
-#define INK_STRNCPY(dst, src, n) std::strncpy(dst, src, n)
-#endif
-
-#endif // ink_base_H
+#endif // ink_base_HPP

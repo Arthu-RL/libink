@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "InkType.h"
+#include "ink/MoveOnlyFunction.h"
 #include "ink/ink_base.hpp"
 
 namespace ink
@@ -734,7 +735,7 @@ class INK_API JsonQuery
 };
 
 // Implementation of query method
-INK_INLINE JsonQuery EnhancedJson::query(const std::string &path) const
+inline JsonQuery EnhancedJson::query(const std::string &path) const
 {
     return JsonQuery(this, path);
 }

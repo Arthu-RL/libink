@@ -1,11 +1,22 @@
+#include <array>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <optional>
 #include <thread>
+#include <type_traits>
 #include <variant>
 
 #include "../include/ink/ink.hpp"
+
+// ink_base spells these without <cstdint>; they must stay the same types, not just the same widths.
+static_assert(std::is_same_v<i8, std::int8_t> && std::is_same_v<u8, std::uint8_t>);
+static_assert(std::is_same_v<i16, std::int16_t> && std::is_same_v<u16, std::uint16_t>);
+static_assert(std::is_same_v<i32, std::int32_t> && std::is_same_v<u32, std::uint32_t>);
+static_assert(std::is_same_v<i64, std::int64_t> && std::is_same_v<u64, std::uint64_t>);
+static_assert(std::is_same_v<usize, std::size_t> && std::is_same_v<isize, std::ptrdiff_t>);
 
 // ============================================================================
 // Minimal assertion-based test harness (no external test framework dependency)
@@ -41,6 +52,58 @@ void runtime(std::function<void()> &&f)
 }
 
 // ============================================================================
+// ink_base
+// ============================================================================
+enum class BaseFlags : u8
+{
+    Nothing = 0,
+    A = 1u << 0,
+    B = 1u << 1,
+};
+
+INK_ENUM_FLAGS(BaseFlags) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+
+template <typename T> constexpr bool kHasArraySize = requires(T &arr) { INK_ARRAY_SIZE(arr); };
+
+static_assert(kHasArraySize<int[4]> && !kHasArraySize<int *>);
+static_assert(INK_GIB_TO_BYTES(4) == 4ull * 1024 * 1024 * 1024);
+static_assert(ink::align_up(u64{0x1'0000'0001}, u32{16}) == 0x1'0000'0010);
+static_assert(ink::align_up(usize{32}, 16) == 32);
+static_assert(std::is_same_v<decltype(ink::align_up(u32{1}, u64{8})), u64>);
+
+void test_base()
+{
+    SECTION("ink_base");
+
+    constexpr int values[] = {1, 2, 3};
+    CHECK(INK_ARRAY_SIZE(values) == 3);
+
+    BaseFlags flags = BaseFlags::Nothing;
+    INK_FLAG_SET(flags, BaseFlags::A | BaseFlags::B);
+    CHECK(INK_FLAG_CHECK(flags, BaseFlags::A | BaseFlags::B));
+    INK_FLAG_CLEAR(flags, BaseFlags::A);
+    CHECK(flags == BaseFlags::B);
+    INK_FLAG_TOGGLE(flags, BaseFlags::B);
+    CHECK(flags == BaseFlags::Nothing);
+
+    int order = 0;
+    {
+        INK_DEFER
+        {
+            CHECK(order == 1);
+            order = 2;
+        };
+        INK_DEFER
+        {
+            CHECK(order == 0);
+            order = 1;
+        };
+        CHECK(order == 0);
+    }
+    CHECK(order == 2);
+}
+
+// ============================================================================
 // utils
 // ============================================================================
 void test_utils()
@@ -58,7 +121,7 @@ void test_utils()
     CHECK(parsed.value_or(0) == 12345);
 
     auto badParsed = ink::utils::string_int("not_a_number");
-    CHECK(!badParsed.has_value());
+    CHECK(!badParsed.has_value() && badParsed.error() == ink::Result::InvalidParam);
 
     u64 t1 = ink::utils::nowMillis();
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -997,6 +1060,7 @@ try
     INK_LOG << "raw log line, argc=" << argc;
     INK_UNUSED(argv);
 
+    test_base();
     test_utils();
     test_inkogger();
     test_inkassert();

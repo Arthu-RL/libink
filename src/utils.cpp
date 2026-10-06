@@ -15,7 +15,7 @@ namespace utils
 
 constexpr usize MAX_CHUNKS = 4096;
 
-std::expected<std::string, ink_result_t> exec_command(const std::string &cmd)
+std::expected<std::string, Result> exec_command(const std::string &cmd)
 {
     // popen/pclose are POSIX; MSVC's CRT exposes the same pipe-a-child-process
     // behavior under the _popen/_pclose spelling instead.
@@ -26,7 +26,7 @@ std::expected<std::string, ink_result_t> exec_command(const std::string &cmd)
 #endif
     if (!pipe)
     {
-        return std::unexpected(ink_result_t::ERROR_IO);
+        return std::unexpected(Result::Io);
     }
 
     std::string result;
@@ -58,13 +58,13 @@ i32 cto_int(char c) noexcept
     return -1;
 }
 
-std::expected<usize, ink_result_t> string_int(std::string_view s) noexcept
+std::expected<usize, Result> string_int(std::string_view s) noexcept
 {
     usize result = 0;
     const auto parsed = std::from_chars(s.data(), s.data() + s.size(), result);
     if (parsed.ec != std::errc{})
     {
-        return std::unexpected(ink_result_t::ERROR_INVALID_PARAM);
+        return std::unexpected(Result::InvalidParam);
     }
     return result;
 }
