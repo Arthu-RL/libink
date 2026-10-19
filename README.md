@@ -53,3 +53,8 @@ This library leverages ideas and algorithms from various open-source projects.
 Scratch blocks retain their high-water allocation until resource destruction.
 The processor creates workers once; dispatch creates no task/future storage.
 A caller's large `std::function` capture can still allocate.
+
+## License
+
+Apache-2.0 — [LICENSE](LICENSE), [NOTICE](NOTICE). Third-party code:
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

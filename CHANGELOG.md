@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1]
+
+### Changed
+
+- **Licensing.** `LICENSE` is the full Apache-2.0 text (it was the short header). New `NOTICE` and `THIRD_PARTY_LICENSES.md`; `cmake --install` puts all three in `share/doc`.
+
 ## [0.6.0]
 
 ### Added

@@ -37,3 +37,13 @@ install(FILES
     "${PROJECT_SOURCE_DIR}/cmake/PlatformSuffix.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ink
 )
+
+# Apache-2.0 4(a)/(d) and the third-party notices: they must reach every
+# archive built from this install tree.
+install(
+    FILES
+        ${PROJECT_SOURCE_DIR}/LICENSE
+        ${PROJECT_SOURCE_DIR}/NOTICE
+        ${PROJECT_SOURCE_DIR}/THIRD_PARTY_LICENSES.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+)
