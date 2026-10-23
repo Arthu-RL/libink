@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.3.3)
 project(ink
-    VERSION 0.6.1
+    VERSION 0.7.0
     DESCRIPTION "Ink Core Subsystem"
     LANGUAGES CXX
 )
@@ -14,7 +14,12 @@ include(GNUInstallDirs)
 # Core Build Options
 option(INK_BUILD_TESTS "Build automated test suite" ON)
 option(INK_ENABLE_LTO "Enable Interprocedural Optimization / LTO" ON)
-option(INK_NATIVE_OPTIMIZE "Target host processor architecture (-march=native)" ON)
+# OFF by default: a library that is installed and linked into shipped programs must not contain instructions the
+# user's CPU may lack. The linux-release preset turns it on for machine-local builds.
+option(INK_NATIVE_OPTIMIZE "Target host processor architecture (-march=native)" OFF)
+# x86-64 microarchitecture level (x86-64-v2, x86-64-v3, ...) for distributable builds; ignored with
+# INK_NATIVE_OPTIMIZE and on other architectures. Empty keeps the compiler's baseline.
+set(INK_CPU_LEVEL "" CACHE STRING "x86-64 microarchitecture level for Release builds (e.g. x86-64-v2)")
 
 # Module Orchestration
 include(cmake/PlatformSuffix.cmake)
@@ -35,6 +40,11 @@ file(GLOB_RECURSE INK_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ink/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ink/*.hpp"
 )
+
+set(_ink_cpu_level_flag "")
+if(INK_CPU_LEVEL AND NOT INK_NATIVE_OPTIMIZE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+    set(_ink_cpu_level_flag "-march=${INK_CPU_LEVEL}")
+endif()
 
 # Applies the warning/optimization flags shared by every ink library target.
 function(ink_apply_common_compile_options target)
@@ -63,6 +73,7 @@ function(ink_apply_common_compile_options target)
                 -march=native
                 -mtune=native
             >
+            $<$<AND:$<CONFIG:Release>,$<BOOL:${_ink_cpu_level_flag}>>:${_ink_cpu_level_flag}>
         )
     endif()
 endfunction()

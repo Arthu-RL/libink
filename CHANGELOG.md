@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0]
+
+### Added
+
+- `INK_CPU_LEVEL`: x86-64 microarchitecture level (`x86-64-v2`, ...) for Release builds that are shipped. New `linux-dist` preset sets it.
+
+### Changed
+
+- **`INK_NATIVE_OPTIMIZE` defaults to OFF** (was ON). The installed archive no longer carries `-march=native` code, which ends in SIGILL on an older CPU. `linux-release` keeps it ON for machine-local builds.
+- `linux-dist` builds without LTO: an archive of LTO objects links only with the exact compiler that built it.
+
 ## [0.6.1]
 
 ### Changed
